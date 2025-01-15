@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.layout.Pane?>
+
+
+<Pane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" style="
+         -fx-background-image: url('https://images.wallpaperscraft.com/image/single/lake_mountain_tree_36589_2650x1600.jpg'), url('https://i.pinimg.com/originals/bc/50/3d/bc503da308b41105cc038b62e3f47083.jpg');
+         -fx-background-size: 1000 500, 1000 500;
+         -fx-background-repeat: no-repeat;
+         -fx-background-position: 0 0, 400 400;
+         -fx-background-color: rgba(0, 0, 0, 0.5)"
+      xmlns="http://javafx.com/javafx/22" xmlns:fx="http://javafx.com/fxml/1"/>
