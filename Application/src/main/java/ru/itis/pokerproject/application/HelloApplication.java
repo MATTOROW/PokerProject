@@ -119,7 +119,7 @@ public class HelloApplication extends Application {
             comb.forEach(System.out::println);
             System.out.println("______________________________");
             System.out.println(HandEvaluator.getHandType(comb));
-            System.out.println(HandEvaluator.calculateHandValue(comb));
+            System.out.println(HandEvaluator.calculateHandValue(comb, 5));
             System.out.println("******************************");
         }
         launch();

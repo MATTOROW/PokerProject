@@ -19,7 +19,7 @@ public class HandEvaluator {
         }
     }
 
-    public static HandWorth calculateHandValue(List<Card> hand) {
+    private static HandWorth calculateHandValue(List<Card> hand) {
         HandType handType = getHandType(hand);
         List<Card> normalizedHand = normalizedHand(hand, handType);
         int deckValue = handType.ordinal();
