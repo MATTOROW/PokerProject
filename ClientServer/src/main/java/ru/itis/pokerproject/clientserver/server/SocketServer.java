@@ -1,5 +1,6 @@
 package ru.itis.pokerproject.clientserver.server;
 
+import ru.itis.pokerproject.shared.protocol.clientserver.ClientMessageType;
 import ru.itis.pokerproject.shared.template.server.ServerException;
 import ru.itis.pokerproject.shared.template.listener.ServerEventListener;
 import ru.itis.pokerproject.shared.template.listener.ServerEventListenerException;
@@ -15,8 +16,8 @@ import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
 
-public class SocketServer implements Server {
-    protected List<ServerEventListener> listeners;
+public class SocketServer implements Server<ClientMessageType, ClientServerMessage> {
+    protected List<ServerEventListener<ClientMessageType, ClientServerMessage>> listeners;
     protected int port;
     protected ServerSocket server;
     protected boolean started;
@@ -31,11 +32,10 @@ public class SocketServer implements Server {
     }
 
     @Override
-    public void registerListener(ServerEventListener listener) throws ServerException {
+    public void registerListener(ServerEventListener<ClientMessageType, ClientServerMessage> listener) throws ServerException {
         if (started) {
             throw new ServerException("Server has been started already.");
         }
-        listener.init(this);
         this.listeners.add(listener);
     }
 
@@ -63,20 +63,22 @@ public class SocketServer implements Server {
                 while (!socket.isClosed()) {
                     ClientServerMessage message = ClientServerMessageUtils.readMessage(inputStream);
 
-                    for (ServerEventListener listener : listeners) {
+                    for (ServerEventListener<ClientMessageType, ClientServerMessage> listener : listeners) {
                         if (message.getType() == listener.getType()) {
-                            if (message.getType() == ClientServerMessage.MessageType.CONNECT_GAME_SERVER_REQUEST) {
+                            if (message.getType() == ClientMessageType.CONNECT_GAME_SERVER_REQUEST) {
                                 gameServers.add(socket);
                             }
-                            listener.handle(connectionId, message);
+                            ClientServerMessage answer = listener.handle(connectionId, message);
+                            sendMessage(connectionId, answer);
                         }
                     }
                 }
             } catch (EmptyMessageException | MessageReadingException e) {
                 sockets.remove(socket);
+                gameServers.remove(socket);
             } catch (ExceedingLengthException | UnknownMessageTypeException | WrongStartBytesException e) {
                 ClientServerMessage errorMessage = ClientServerMessageUtils.createMessage(
-                        ClientServerMessage.MessageType.ERROR,
+                        ClientMessageType.ERROR,
                         "Error while connecting to server.".getBytes()
                 );
                 sendMessage(connectionId, errorMessage);

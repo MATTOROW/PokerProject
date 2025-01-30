@@ -1,19 +1,18 @@
 package ru.itis.pokerproject.gameserver.server.listener;
 
-import ru.itis.pokerproject.shared.protocol.clientserver.ClientServerMessage;
-import ru.itis.pokerproject.shared.template.listener.AbstractServerEventListener;
+import ru.itis.pokerproject.shared.protocol.gameserver.GameMessageType;
+import ru.itis.pokerproject.shared.protocol.gameserver.GameServerMessage;
+import ru.itis.pokerproject.shared.template.listener.ServerEventListener;
 import ru.itis.pokerproject.shared.template.listener.ServerEventListenerException;
 
-import static ru.itis.pokerproject.shared.protocol.gameserver.GameServerMessage.MessageType.GET_ROOMS_REQUEST;
-
-public class GetRoomEventListener extends AbstractServerEventListener {
+public class GetRoomEventListener implements ServerEventListener<GameMessageType, GameServerMessage> {
     @Override
-    public void handle(int connectionId, ClientServerMessage message) throws ServerEventListenerException {
-        
+    public GameServerMessage handle(int connectionId, GameServerMessage message) throws ServerEventListenerException {
+        return null;
     }
 
     @Override
-    public ClientServerMessage.MessageType getType() {
-        return GET_ROOMS_REQUEST;
+    public GameMessageType getType() {
+        return GameMessageType.GET_ROOMS_REQUEST;
     }
 }

@@ -14,7 +14,7 @@ import static ru.itis.pokerproject.shared.protocol.gameserver.GameServerMessage.
 public class GameServerMessageUtils {
     // Фабричный метод для создания сообщения с типом и данными
     public static GameServerMessage createMessage(
-            GameServerMessage.MessageType messageType,
+           GameMessageType messageType,
             byte[] data
     ) throws MessageException {
         if (data.length > MAX_LENGTH) {
@@ -66,7 +66,7 @@ public class GameServerMessageUtils {
                 // Читаем тип сообщения
                 in.read(buffer, 0, 4);
                 int messageTypeOrdinal = ByteBuffer.wrap(buffer, 0, 4).getInt();
-                GameServerMessage.MessageType messageType = GameServerMessage.MessageType.values()[messageTypeOrdinal];
+                GameMessageType messageType = GameMessageType.values()[messageTypeOrdinal];
                 if (messageType == null) {
                     throw new UnknownMessageTypeException(messageTypeOrdinal);
                 }

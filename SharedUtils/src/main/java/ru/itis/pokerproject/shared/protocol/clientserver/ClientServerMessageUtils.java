@@ -7,18 +7,18 @@ import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 
-import static ru.itis.pokerproject.shared.protocol.clientserver.ClientServerMessage.MAX_LENGTH;
-import static ru.itis.pokerproject.shared.protocol.clientserver.ClientServerMessage.START_BYTES;
-import static ru.itis.pokerproject.shared.protocol.clientserver.ClientServerMessage.MessageType;
+
 
 public class ClientServerMessageUtils {
+    private static final int MAX_LENGTH = ClientServerMessage.getMaxLength();
+    private static final byte[] START_BYTES = ClientServerMessage.getStartBytes();
 
     // Фабричный метод для создания сообщения с типом и данными
     public static ClientServerMessage createMessage(
-            MessageType messageType,
+            ClientMessageType messageType,
             byte[] data
     ) throws MessageException {
-        if (data.length > MAX_LENGTH) {
+        if (data.length > ClientServerMessage.getMaxLength()) {
             throw new ExceedingLengthException(data.length, MAX_LENGTH);
         }
         return new ClientServerMessage(messageType, data);
@@ -67,7 +67,7 @@ public class ClientServerMessageUtils {
                 // Читаем тип сообщения
                 in.read(buffer, 0, 4);
                 int messageTypeOrdinal = ByteBuffer.wrap(buffer, 0, 4).getInt();
-                ClientServerMessage.MessageType messageType = ClientServerMessage.MessageType.values()[messageTypeOrdinal];
+                ClientMessageType messageType = ClientMessageType.values()[messageTypeOrdinal];
                 if (messageType == null) {
                     throw new UnknownMessageTypeException(messageTypeOrdinal);
                 }

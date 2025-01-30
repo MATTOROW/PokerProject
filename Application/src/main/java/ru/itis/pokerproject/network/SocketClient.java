@@ -1,5 +1,6 @@
 package ru.itis.pokerproject.network;
 
+import ru.itis.pokerproject.shared.protocol.clientserver.ClientMessageType;
 import ru.itis.pokerproject.shared.protocol.clientserver.ClientServerMessage;
 import ru.itis.pokerproject.shared.protocol.clientserver.ClientServerMessageUtils;
 import ru.itis.pokerproject.shared.template.client.Client;
@@ -9,7 +10,7 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.Socket;
 
-public class SocketClient implements Client {
+public class SocketClient implements Client<ClientMessageType, ClientServerMessage> {
 
     protected final InetAddress address;
     protected final int port;

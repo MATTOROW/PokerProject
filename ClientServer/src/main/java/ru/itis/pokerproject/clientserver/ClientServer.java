@@ -10,7 +10,7 @@ public class ClientServer {
 
     public static void main(String[] args) {
         try{
-            Server server = new SocketServer(PORT);
+            SocketServer server = new SocketServer(PORT);
             server.registerListener(new LoginEventListener());
             server.registerListener(new RegisterEventListener());
             server.start();
