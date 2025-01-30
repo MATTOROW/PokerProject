@@ -9,5 +9,6 @@ public enum GameMessageType {
     RAISE,
     FOLD,
     CALL,
-    CHECK
+    CHECK,
+    ERROR
 }

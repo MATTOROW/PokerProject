@@ -5,7 +5,7 @@ import ru.itis.pokerproject.shared.protocol.gameserver.GameServerMessage;
 import ru.itis.pokerproject.shared.template.listener.ServerEventListener;
 import ru.itis.pokerproject.shared.template.listener.ServerEventListenerException;
 
-public class GetRoomEventListener implements ServerEventListener<GameMessageType, GameServerMessage> {
+public class GetRoomsEventListener implements ServerEventListener<GameMessageType, GameServerMessage> {
     @Override
     public GameServerMessage handle(int connectionId, GameServerMessage message) throws ServerEventListenerException {
         return null;

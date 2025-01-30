@@ -13,5 +13,7 @@ public enum ClientMessageType {
     UPDATE_USER_DATA_RESPONSE,      // Ответ на запрос обновления данных пользователя
     CONNECT_GAME_SERVER_REQUEST,    // Запрос на подключение нового игрового сервера
     CONNECT_GAME_SERVER_RESPONSE,   // Ответ на запрос подключения нового игрового сервера
+    GET_ROOMS_REQUEST,              // Запрос на получение списка комнат
+    GET_ROOMS_RESPONSE,             // Ответ на запрос получения списка комнат
     ERROR                           // Ошибка
 }

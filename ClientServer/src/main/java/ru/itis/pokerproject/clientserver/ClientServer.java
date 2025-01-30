@@ -1,6 +1,5 @@
 package ru.itis.pokerproject.clientserver;
 
-import ru.itis.pokerproject.shared.template.server.Server;
 import ru.itis.pokerproject.clientserver.server.SocketServer;
 import ru.itis.pokerproject.clientserver.server.listener.LoginEventListener;
 import ru.itis.pokerproject.clientserver.server.listener.RegisterEventListener;

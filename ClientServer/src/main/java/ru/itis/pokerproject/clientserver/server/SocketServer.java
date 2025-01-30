@@ -1,57 +1,25 @@
 package ru.itis.pokerproject.clientserver.server;
 
 import ru.itis.pokerproject.shared.protocol.clientserver.ClientMessageType;
+import ru.itis.pokerproject.shared.template.server.AbstractSocketServer;
 import ru.itis.pokerproject.shared.template.server.ServerException;
 import ru.itis.pokerproject.shared.template.listener.ServerEventListener;
 import ru.itis.pokerproject.shared.template.listener.ServerEventListenerException;
 import ru.itis.pokerproject.shared.protocol.clientserver.ClientServerMessage;
 import ru.itis.pokerproject.shared.protocol.clientserver.ClientServerMessageUtils;
 import ru.itis.pokerproject.shared.protocol.exception.*;
-import ru.itis.pokerproject.shared.template.server.Server;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.ArrayList;
 import java.util.List;
 
-public class SocketServer implements Server<ClientMessageType, ClientServerMessage> {
-    protected List<ServerEventListener<ClientMessageType, ClientServerMessage>> listeners;
-    protected int port;
-    protected ServerSocket server;
-    protected boolean started;
-    protected List<Socket> sockets;
+public class SocketServer extends AbstractSocketServer<ClientMessageType, ClientServerMessage> {
     protected List<Socket> gameServers;
 
     public SocketServer(int port) {
-        this.listeners = new ArrayList<>();
-        this.port = port;
-        this.sockets = new ArrayList<>();
-        this.started = false;
-    }
-
-    @Override
-    public void registerListener(ServerEventListener<ClientMessageType, ClientServerMessage> listener) throws ServerException {
-        if (started) {
-            throw new ServerException("Server has been started already.");
-        }
-        this.listeners.add(listener);
-    }
-
-    @Override
-    public void start() throws ServerException {
-        try {
-            server = new ServerSocket(this.port);
-            started = true;
-
-            while (true) {
-                Socket s = server.accept();
-                handleConnection(s);
-            }
-        } catch (IOException e) {
-            throw new ServerException("Problem with server starting.", e);
-        }
+        super(port);
     }
 
     protected void handleConnection(Socket socket) {
