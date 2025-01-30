@@ -16,6 +16,10 @@ public class AccountRepository {
 
     //language=sql
     private final String SQL_FIND_BY_USERNAME = "SELECT * FROM account WHERE username = ?";
+    //language=sql
+    private final String SQL_CREATE = "INSERT INTO account (username, password) VALUES (?, ?) RETURNING *";
+    //language=sql
+    private final String SQL_UPDATE_MONEY_BY_USERNAME = "UPDATE account SET money = ? WHERE username = ? RETURNING money";
 
     public Optional<AccountEntity> findByUsername(String username) {
         try (Connection connection = Database.getConnection()) {
@@ -25,6 +29,29 @@ public class AccountRepository {
             return resultSet.next() ? Optional.ofNullable(rowMapper.mapRow(resultSet)) : Optional.empty();
         } catch (SQLException e) {
             return Optional.empty();
+        }
+    }
+
+    public Optional<AccountEntity> create(String username, String hashedPassword) {
+        try (Connection connection = Database.getConnection()) {
+            PreparedStatement statement = connection.prepareStatement(SQL_CREATE);
+            statement.setString(1, username);
+            statement.setString(2, hashedPassword);
+            ResultSet resultSet = statement.executeQuery();
+            return resultSet.next() ? Optional.ofNullable(rowMapper.mapRow(resultSet)) : Optional.empty();
+        } catch (SQLException e) {
+            return Optional.empty();
+        }
+    }
+
+    public long updateMoney(String username, long money) {
+        try (Connection connection = Database.getConnection()) {
+            PreparedStatement statement = connection.prepareStatement(SQL_UPDATE_MONEY_BY_USERNAME);
+            statement.setLong(1, money);
+            statement.setString(2, username);
+            return statement.executeQuery().getLong(1);
+        } catch (SQLException e) {
+            return -404;
         }
     }
 }

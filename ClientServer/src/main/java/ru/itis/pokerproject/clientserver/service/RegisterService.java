@@ -6,21 +6,13 @@ import ru.itis.pokerproject.clientserver.model.AccountEntity;
 import ru.itis.pokerproject.clientserver.repository.AccountRepository;
 import ru.itis.pokerproject.shared.dto.response.AccountResponse;
 
-public class LoginService {
-    private static final BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
+public class RegisterService {
     private static final AccountRepository accountRepository = new AccountRepository();
     private static final AccountEntityMapper accountEntityMapper = new AccountEntityMapper();
 
-    private LoginService() {}
+    private RegisterService() {}
 
-    public static AccountResponse login(String username, String password) {
-        AccountEntity account = accountRepository.findByUsername(username).orElse(null);
-        if (account == null) {
-            return null;
-        }
-        if (encoder.matches(password, account.getPassword())) {
-            return accountEntityMapper.toResponse(account);
-        }
-        return null;
+    public static AccountResponse register(String username, String password) {
+        return accountEntityMapper.toResponse(accountRepository.create(username, password).orElse(null));
     }
 }
