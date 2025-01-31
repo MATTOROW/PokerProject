@@ -6,15 +6,15 @@ import java.util.List;
 import java.util.UUID;
 
 public class Room {
-    private UUID code;
-    private String name;
-    private int maxPlayers;
+    private final UUID code;
+    private final int maxPlayers;
     private final List<Socket> players = new ArrayList<>();
+    private final long minBet;
 
-    public Room(String name, int maxPlayers) {
+    public Room(int maxPlayers, long minBet) {
         this.code = UUID.randomUUID();
-        this.name = name;
         this.maxPlayers = maxPlayers;
+        this.minBet = minBet;
     }
 
     public void addPlayer(Socket player) {
@@ -34,6 +34,10 @@ public class Room {
     }
 
     public String getRoomInfo() {
-        return "%s;%s;%s;%s".formatted(code.toString(), name, maxPlayers, currentPlayersCount());
+        return "%s;%s;%s;%s".formatted(code.toString(), maxPlayers, currentPlayersCount(), minBet);
+    }
+
+    public void startGame() {
+
     }
 }

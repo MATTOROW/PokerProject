@@ -12,14 +12,8 @@ import ru.itis.pokerproject.shared.dto.response.AccountResponse;
 
 public class LoginScreen {
     private final VBox view;
-    private final AuthService authService;
-    private final Stage primaryStage;
-    private final ConnectionErrorHandler errorHandler;
 
-    public LoginScreen(AuthService authService, Stage primaryStage, ConnectionErrorHandler errorHandler) {
-        this.authService = authService;
-        this.primaryStage = primaryStage;
-        this.errorHandler = errorHandler;
+    public LoginScreen(AuthService authService, ScreenManager manager) {
 
         // Создаем элементы интерфейса
         Label titleLabel = new Label("Вход в систему");
@@ -50,6 +44,7 @@ public class LoginScreen {
                     if (account != null) {
                         // Переход на главный экран (можно добавить позже)
                         System.out.println("Успешный вход!");
+                        Platform.runLater(manager::showRoomsScreen);
                     } else {
                         System.out.println("Ошибка входа!");
                     }
@@ -59,7 +54,6 @@ public class LoginScreen {
                             () -> {
                                 Alert alert = new Alert(Alert.AlertType.ERROR);
                                 alert.initModality(Modality.APPLICATION_MODAL);
-                                alert.initOwner(primaryStage);
                                 alert.setTitle("Ошибка!");
                                 alert.setContentText(e.getMessage());
                                 alert.show();
@@ -78,12 +72,13 @@ public class LoginScreen {
         // Обработка нажатия на кнопку "Зарегистрироваться"
         registerButton.setOnAction(event -> {
             // Переход на экран регистрации
-            RegisterScreen registerScreen = new RegisterScreen(authService, primaryStage, errorHandler);
-            primaryStage.getScene().setRoot(registerScreen.getView());
+            manager.showRegisterScreen();
         });
 
         // Создаем layout
         view = new VBox(10, titleLabel, usernameField, passwordField, loginButton, registerButton, progressIndicator);
+        view.setMinWidth(300);
+        view.setMinHeight(400);
         view.setAlignment(Pos.CENTER);
     }
 

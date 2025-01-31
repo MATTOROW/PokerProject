@@ -1,8 +1,10 @@
 package ru.itis.pokerproject.application;
 
+import javafx.application.Platform;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
 import javafx.scene.layout.VBox;
+import javafx.stage.Modality;
 import javafx.stage.Stage;
 import ru.itis.pokerproject.shared.template.client.ClientException;
 import ru.itis.pokerproject.service.AuthService;
@@ -10,14 +12,8 @@ import ru.itis.pokerproject.shared.dto.response.AccountResponse;
 
 public class RegisterScreen {
     private final VBox view;
-    private final AuthService authService;
-    private final Stage primaryStage;
-    private final ConnectionErrorHandler errorHandler;
 
-    public RegisterScreen(AuthService authService, Stage primaryStage, ConnectionErrorHandler errorHandler) {
-        this.authService = authService;
-        this.primaryStage = primaryStage;
-        this.errorHandler = errorHandler;
+    public RegisterScreen(AuthService authService, ScreenManager manager) {
 
         // Создаем элементы интерфейса
         Label titleLabel = new Label("Регистрация");
@@ -56,15 +52,20 @@ public class RegisterScreen {
                     if (account != null) {
                         System.out.println("Успешная регистрация!");
                         // Возврат на экран логина
-                        javafx.application.Platform.runLater(() -> {
-                            LoginScreen loginScreen = new LoginScreen(authService, primaryStage, errorHandler);
-                            primaryStage.getScene().setRoot(loginScreen.getView());
-                        });
+                        manager.showLoginScreen();
                     } else {
                         System.out.println("Ошибка регистрации!");
                     }
                 } catch (ClientException e) {
-                    errorHandler.showConnectionErrorDialog(primaryStage);
+                    Platform.runLater(
+                            () -> {
+                                Alert alert = new Alert(Alert.AlertType.ERROR);
+                                alert.initModality(Modality.APPLICATION_MODAL);
+                                alert.setTitle("Ошибка!");
+                                alert.setContentText(e.getMessage());
+                                alert.show();
+                            }
+                    );
                 } finally {
                     // Скрываем анимацию и активируем кнопку
                     javafx.application.Platform.runLater(() -> {
@@ -78,12 +79,13 @@ public class RegisterScreen {
         // Обработка нажатия на кнопку "Назад"
         backButton.setOnAction(event -> {
             // Возврат на экран логина
-            LoginScreen loginScreen = new LoginScreen(authService, primaryStage, errorHandler);
-            primaryStage.getScene().setRoot(loginScreen.getView());
+            manager.showLoginScreen();
         });
 
         // Создаем layout
         view = new VBox(10, titleLabel, usernameField, passwordField, confirmPasswordField, registerButton, backButton, progressIndicator);
+        view.setMinWidth(300);
+        view.setMinHeight(400);
         view.setAlignment(Pos.CENTER);
     }
 

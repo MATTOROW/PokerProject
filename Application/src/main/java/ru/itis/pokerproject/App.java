@@ -5,6 +5,11 @@ import javafx.scene.Scene;
 import javafx.stage.Stage;
 import ru.itis.pokerproject.application.ConnectionErrorHandler;
 import ru.itis.pokerproject.application.LoginScreen;
+import ru.itis.pokerproject.application.ScreenManager;
+import ru.itis.pokerproject.service.GetRoomsService;
+import ru.itis.pokerproject.shared.protocol.clientserver.ClientMessageType;
+import ru.itis.pokerproject.shared.protocol.clientserver.ClientServerMessage;
+import ru.itis.pokerproject.shared.protocol.clientserver.ClientServerMessageUtils;
 import ru.itis.pokerproject.shared.template.client.ClientException;
 import ru.itis.pokerproject.network.SocketClient;
 import ru.itis.pokerproject.service.AuthService;
@@ -17,7 +22,7 @@ public class App extends Application {
     private static final int PORT = 25000;
 
     @Override
-    public void start(Stage primaryStage) throws UnknownHostException, ClientException {
+    public void start(Stage primaryStage) throws UnknownHostException {
         // Создаем клиент для взаимодействия с сервером
         SocketClient client = new SocketClient(InetAddress.getByName(HOST), PORT);
 
@@ -29,16 +34,9 @@ public class App extends Application {
             handler.showConnectionErrorDialog(primaryStage);
         }
 
-        // Создаем сервис для авторизации
-        AuthService authService = new AuthService(client);
-
         // Создаем экран логина
-        LoginScreen loginScreen = new LoginScreen(authService, primaryStage, handler);
-        Scene scene = new Scene(loginScreen.getView(), 300, 200);
-
-        primaryStage.setTitle("Авторизация");
-        primaryStage.setScene(scene);
-        primaryStage.show();
+        ScreenManager manager = new ScreenManager(primaryStage, handler, client);
+        manager.showLoginScreen();
     }
 
     public static void main(String[] args) {
