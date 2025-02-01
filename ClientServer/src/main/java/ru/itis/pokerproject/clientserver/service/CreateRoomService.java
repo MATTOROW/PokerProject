@@ -31,7 +31,7 @@ public class CreateRoomService {
         long[] counts = responses.stream().mapToLong(resp -> Long.parseLong(new String(resp.getData()))).toArray();
 
         int index = 0;
-        long minValue = Long.MAX_VALUE;
+        long minValue = counts[index];
 
         for (int i = 1; i < counts.length; ++ i) {
             if (counts[i] < minValue) {

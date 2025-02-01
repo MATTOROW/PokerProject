@@ -143,7 +143,7 @@ public class SocketServer extends AbstractSocketServer<GameMessageType, GameServ
             clientServerToSend = new Socket(clientServerHost, clientServerPort);
             ClientServerMessage response = sendRequestToClientServer(
                     ClientServerMessageUtils.createMessage(ClientMessageType.REGISTER_GAME_SERVER_REQUEST,
-                            getLocalIPv4().getBytes())
+                            "%s:%s".formatted(getLocalIPv4(), port).getBytes())
             );
             if (response.getType() != ClientMessageType.REGISTER_GAME_SERVER_RESPONSE) {
                 throw new ServerException("Can't connect.");
