@@ -18,12 +18,8 @@ import ru.itis.pokerproject.shared.template.server.ServerException;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.ServerSocket;
-import java.net.Socket;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
-import java.util.UUID;
+import java.net.*;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class SocketServer extends AbstractSocketServer<GameMessageType, GameServerMessage> {
@@ -147,7 +143,7 @@ public class SocketServer extends AbstractSocketServer<GameMessageType, GameServ
             clientServerToSend = new Socket(clientServerHost, clientServerPort);
             ClientServerMessage response = sendRequestToClientServer(
                     ClientServerMessageUtils.createMessage(ClientMessageType.REGISTER_GAME_SERVER_REQUEST,
-                            "%s:%s".formatted(server.getInetAddress().getHostAddress(), port).getBytes())
+                            getLocalIPv4().getBytes())
             );
             if (response.getType() != ClientMessageType.REGISTER_GAME_SERVER_RESPONSE) {
                 throw new ServerException("Can't connect.");
@@ -208,6 +204,27 @@ public class SocketServer extends AbstractSocketServer<GameMessageType, GameServ
     public UUID createRoom(int maxPlayers, long minBet) {
         Room newRoom = new Room(maxPlayers, minBet);
         rooms.add(newRoom);
+        System.out.println(rooms.size());
         return newRoom.getCode();
+    }
+
+    private static String getLocalIPv4() {
+        Enumeration<NetworkInterface> interfaces = null;
+        try {
+            interfaces = NetworkInterface.getNetworkInterfaces();
+        } catch (SocketException e) {
+            return "Error: not found.";
+        }
+        while (interfaces.hasMoreElements()) {
+            NetworkInterface networkInterface = interfaces.nextElement();
+            Enumeration<InetAddress> addresses = networkInterface.getInetAddresses();
+            while (addresses.hasMoreElements()) {
+                InetAddress address = addresses.nextElement();
+                if (!address.isLoopbackAddress() && address instanceof Inet4Address) {
+                    return address.getHostAddress();
+                }
+            }
+        }
+        return "Not found";
     }
 }
