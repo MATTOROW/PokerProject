@@ -3,6 +3,7 @@ package ru.itis.pokerproject.clientserver.server;
 import ru.itis.pokerproject.clientserver.service.CreateRoomService;
 import ru.itis.pokerproject.clientserver.service.GetRoomsService;
 import ru.itis.pokerproject.shared.protocol.clientserver.ClientMessageType;
+import ru.itis.pokerproject.shared.protocol.gameserver.GameMessageType;
 import ru.itis.pokerproject.shared.protocol.gameserver.GameServerMessage;
 import ru.itis.pokerproject.shared.protocol.gameserver.GameServerMessageUtils;
 import ru.itis.pokerproject.shared.template.server.AbstractSocketServer;
@@ -12,6 +13,7 @@ import ru.itis.pokerproject.shared.template.listener.ServerEventListenerExceptio
 import ru.itis.pokerproject.shared.protocol.clientserver.ClientServerMessage;
 import ru.itis.pokerproject.shared.protocol.clientserver.ClientServerMessageUtils;
 import ru.itis.pokerproject.shared.protocol.exception.*;
+import ru.itis.pokerproject.shared.template.server.SocketArrayList;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -20,14 +22,14 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class SocketServer extends AbstractSocketServer<ClientMessageType, ClientServerMessage> {
-    protected List<Socket> gameServersToListen;
-    protected List<Socket> gameServersToSend;
+    protected SocketArrayList gameServersToListen;
+    protected SocketArrayList gameServersToSend;
     protected List<ServerEventListener<ClientMessageType, ClientServerMessage>> gameServerListeners;
 
     public SocketServer(int port) {
         super(port);
-        gameServersToListen = new ArrayList<>();
-        gameServersToSend = new ArrayList<>();
+        gameServersToListen = new SocketArrayList();
+        gameServersToSend = new SocketArrayList();
         gameServerListeners = new ArrayList<>();
         GetRoomsService.init(this);
         CreateRoomService.init(this);
@@ -47,32 +49,38 @@ public class SocketServer extends AbstractSocketServer<ClientMessageType, Client
             try {
                 InputStream inputStream = socket.getInputStream();
                 while (!socket.isClosed() && sockets.contains(socket)) {
+                    boolean handled = false;
                     ClientServerMessage message = ClientServerMessageUtils.readMessage(inputStream);
 
                     if (message.getType() == ClientMessageType.REGISTER_GAME_SERVER_REQUEST) {
-                        sockets.remove(socket);
+                        sockets.removeWithoutClosing(socket);
                         gameServersToListen.add(socket);
                         String[] connectionData = new String(message.getData()).split(":");
                         gameServersToSend.add(new Socket(connectionData[0], Integer.parseInt(connectionData[1])));
                         connectionId = gameServersToListen.lastIndexOf(socket);
-                        inputStream = null;
                         sendMessageToGameServer(connectionId, ClientServerMessageUtils.createMessage(ClientMessageType.REGISTER_GAME_SERVER_RESPONSE, new byte[0]));
                         handleServerConnection(socket);
                     } else {
                         for (ServerEventListener<ClientMessageType, ClientServerMessage> listener : listeners) {
                             if (message.getType() == listener.getType()) {
                                 System.out.println("Нашелся нужный!" + message.getType());
+                                handled = true;
                                 ClientServerMessage answer = listener.handle(connectionId, message);
                                 sendMessage(connectionId, answer);
                             }
                         }
+                        if (!handled) {
+                            ClientServerMessage error = ClientServerMessageUtils.createMessage(
+                                    ClientMessageType.ERROR,
+                                    "You are not allowed to recieve data using this message type: %s."
+                                            .formatted(message.getType()).getBytes()
+                            );
+                            sendMessage(connectionId, error);
+                        }
                     }
                 }
-                if (inputStream != null) {
-                    inputStream.close();
-                }
             } catch (EmptyMessageException | MessageReadingException e) {
-
+                sockets.remove(socket);
             } catch (ExceedingLengthException | UnknownMessageTypeException | WrongStartBytesException e) {
                 ClientServerMessage errorMessage = ClientServerMessageUtils.createMessage(
                         ClientMessageType.ERROR,
@@ -92,19 +100,27 @@ public class SocketServer extends AbstractSocketServer<ClientMessageType, Client
         new Thread(() -> {
             int connectionId = gameServersToListen.lastIndexOf(socket);
             try (InputStream inputStream = socket.getInputStream()) {
-
-                while (!socket.isClosed()) {
+                while (!socket.isClosed() && gameServersToListen.contains(socket)) {
+                    boolean handled = false;
                     ClientServerMessage message = ClientServerMessageUtils.readMessage(inputStream);
                     for (ServerEventListener<ClientMessageType, ClientServerMessage> listener : gameServerListeners) {
                         if (message.getType() == listener.getType()) {
                             System.out.println("Нашелся нужный!" + message.getType());
+                            handled = true;
                             ClientServerMessage answer = listener.handle(connectionId, message);
                             sendMessage(connectionId, answer);
                         }
                     }
+                    if (!handled) {
+                        ClientServerMessage error = ClientServerMessageUtils.createMessage(
+                                ClientMessageType.ERROR,
+                                "You are not allowed to recieve data using this message type: %s."
+                                        .formatted(message.getType()).getBytes()
+                        );
+                        sendMessageToGameServer(connectionId, error);
+                    }
                 }
             } catch (EmptyMessageException | MessageReadingException e) {
-                e.printStackTrace();
                 gameServersToListen.remove(connectionId);
                 gameServersToSend.remove(connectionId);
             } catch (ExceedingLengthException | UnknownMessageTypeException | WrongStartBytesException e) {
@@ -171,10 +187,16 @@ public class SocketServer extends AbstractSocketServer<ClientMessageType, Client
 
     public GameServerMessage sendRequestToGameServer(int serverConnectionId, GameServerMessage message) {
         Socket socket = gameServersToSend.get(serverConnectionId);
-        return sendRequestToGameServer(socket, message);
+        try {
+            return sendRequestToGameServer(socket, message);
+        } catch (ServerException e) {
+            gameServersToSend.remove(serverConnectionId);
+            gameServersToListen.remove(serverConnectionId);
+            return GameServerMessageUtils.createMessage(GameMessageType.ERROR, e.getMessage().getBytes());
+        }
     }
 
-    public GameServerMessage sendRequestToGameServer(Socket socket, GameServerMessage message) {
+    protected GameServerMessage sendRequestToGameServer(Socket socket, GameServerMessage message) throws ServerException {
         if (!started) {
             throw new ServerException("Server hasn't been started yet.");
         }
@@ -187,7 +209,6 @@ public class SocketServer extends AbstractSocketServer<ClientMessageType, Client
             System.out.println(GameServerMessageUtils.toString(ans));
             return ans;
         } catch (IOException e) {
-            gameServersToSend.remove(socket);
             throw new ServerException(e.getMessage());
         }
     }
@@ -197,8 +218,8 @@ public class SocketServer extends AbstractSocketServer<ClientMessageType, Client
             throw new ServerException("Server hasn't been started yet.");
         }
         List<GameServerMessage> answers = new ArrayList<>();
-        for (Socket gameServer : gameServersToSend) {
-            GameServerMessage messages = sendRequestToGameServer(gameServer, message);
+        for (int i = 0; i < gameServersToSend.size(); ++i) {
+            GameServerMessage messages = sendRequestToGameServer(i, message);
             answers.add(messages);
         }
         return answers;

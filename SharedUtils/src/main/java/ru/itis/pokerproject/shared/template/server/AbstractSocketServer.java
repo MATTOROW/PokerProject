@@ -14,12 +14,12 @@ public abstract class AbstractSocketServer<E extends Enum<E>, M extends Abstract
     protected int port;
     protected ServerSocket server;
     protected boolean started;
-    protected List<Socket> sockets;
+    protected SocketArrayList sockets;
 
     public AbstractSocketServer(int port) {
         this.listeners = new ArrayList<>();
         this.port = port;
-        this.sockets = new ArrayList<>();
+        this.sockets = new SocketArrayList();
         this.started = false;
     }
 

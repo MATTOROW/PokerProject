@@ -42,10 +42,7 @@ public class SocketServer extends AbstractSocketServer<GameMessageType, GameServ
         CreateRoomService.init(this);
         GetRoomsCountService.init(this);
 
-        // Проверка общения между серверами.
         rooms = new ArrayList<>();
-//        rooms.add(new Room(5, 100));
-//        rooms.add(new Room(2, 1000));
     }
 
     protected void handleConnection(Socket socket) {
@@ -53,16 +50,24 @@ public class SocketServer extends AbstractSocketServer<GameMessageType, GameServ
         new Thread(() -> {
             int connectionId = sockets.lastIndexOf(socket);
             try (InputStream inputStream = socket.getInputStream()) {
-
                 while (!socket.isClosed()) {
+                    boolean handled = false;
                     GameServerMessage message = GameServerMessageUtils.readMessage(inputStream);
 
                     for (ServerEventListener<GameMessageType, GameServerMessage> listener : listeners) {
                         if (message.getType() == listener.getType()) {
+                            handled = true;
                             GameServerMessage answer = listener.handle(connectionId, message);
                             sendMessage(connectionId, answer);
-                            System.out.println("Я отдал данные о комнатах!");
                         }
+                    }
+                    if (!handled) {
+                        GameServerMessage error = GameServerMessageUtils.createMessage(
+                                GameMessageType.ERROR,
+                                "You are not allowed to receive data using this message type: %s."
+                                        .formatted(message.getType()).getBytes()
+                        );
+                        sendMessage(connectionId, error);
                     }
                 }
             } catch (EmptyMessageException | MessageReadingException e) {
@@ -83,22 +88,36 @@ public class SocketServer extends AbstractSocketServer<GameMessageType, GameServ
 
     protected void handleServerConnection() {
         new Thread(() -> {
-            int connectionId = sockets.lastIndexOf(clientServerToListen);
             try (InputStream inputStream = clientServerToListen.getInputStream()) {
-
+                int connectionId = -1;
                 while (!clientServerToListen.isClosed()) {
+                    boolean handled = false;
                     GameServerMessage message = GameServerMessageUtils.readMessage(inputStream);
 
                     for (ServerEventListener<GameMessageType, GameServerMessage> listener : clientServerListeners) {
                         if (message.getType() == listener.getType()) {
+                            handled = true;
                             GameServerMessage answer = listener.handle(connectionId, message);
                             sendMessageToClientServer(answer);
-                            System.out.println("Я отдал данные о комнатах!");
                         }
+                    }
+                    if (!handled) {
+                        GameServerMessage error = GameServerMessageUtils.createMessage(
+                                GameMessageType.ERROR,
+                                "You are not allowed to receive data using this message type: %s."
+                                        .formatted(message.getType()).getBytes()
+                        );
+                        sendMessageToClientServer(error);
                     }
                 }
             } catch (EmptyMessageException | MessageReadingException e) {
                 System.out.println("Упал главный сервак");
+                try {
+                    clientServerToListen.close();
+                } catch (IOException ex) {
+                    throw new RuntimeException(ex);
+                }
+                clientServerToListen = null;
             } catch (ExceedingLengthException | UnknownMessageTypeException | WrongStartBytesException e) {
                 GameServerMessage errorMessage = GameServerMessageUtils.createMessage(
                         GameMessageType.ERROR,

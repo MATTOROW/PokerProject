@@ -23,10 +23,12 @@ public class GetRoomsService {
         }
         GameServerMessage request = GameServerMessageUtils.createMessage(GameMessageType.GET_ROOMS_REQUEST, new byte[0]);
         List<GameServerMessage> responses = server.sendBroadcastRequestToGameServer(request);
-        System.out.println("Ответы игрового:" + responses.size());
 
         // Объединяем все данные о комнатах
         byte joinSymbol = '\n';
+        if (responses.isEmpty()) {
+            return null;
+        }
         int length = responses.stream().mapToInt(m -> m.getData().length).sum() + responses.size() - 1;
         if (length == -1) {
             return new byte[0];
