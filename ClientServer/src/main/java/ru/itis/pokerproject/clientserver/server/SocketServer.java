@@ -1,5 +1,6 @@
 package ru.itis.pokerproject.clientserver.server;
 
+import ru.itis.pokerproject.clientserver.service.CreateRoomService;
 import ru.itis.pokerproject.clientserver.service.GetRoomsService;
 import ru.itis.pokerproject.shared.protocol.clientserver.ClientMessageType;
 import ru.itis.pokerproject.shared.protocol.gameserver.GameServerMessage;
@@ -21,12 +22,22 @@ import java.util.List;
 public class SocketServer extends AbstractSocketServer<ClientMessageType, ClientServerMessage> {
     protected List<Socket> gameServersToListen;
     protected List<Socket> gameServersToSend;
+    protected List<ServerEventListener<ClientMessageType, ClientServerMessage>> gameServerListeners;
 
     public SocketServer(int port) {
         super(port);
         gameServersToListen = new ArrayList<>();
         gameServersToSend = new ArrayList<>();
+        gameServerListeners = new ArrayList<>();
         GetRoomsService.init(this);
+        CreateRoomService.init(this);
+    }
+
+    public void registerGameServerListener(ServerEventListener<ClientMessageType, ClientServerMessage> listener) throws ServerException {
+        if (started) {
+            throw new ServerException("Server has been started already.");
+        }
+        this.gameServerListeners.add(listener);
     }
 
     protected void handleConnection(Socket socket) {
@@ -84,7 +95,7 @@ public class SocketServer extends AbstractSocketServer<ClientMessageType, Client
 
                 while (!socket.isClosed()) {
                     ClientServerMessage message = ClientServerMessageUtils.readMessage(inputStream);
-                    for (ServerEventListener<ClientMessageType, ClientServerMessage> listener : listeners) {
+                    for (ServerEventListener<ClientMessageType, ClientServerMessage> listener : gameServerListeners) {
                         if (message.getType() == listener.getType()) {
                             System.out.println("Нашелся нужный!" + message.getType());
                             ClientServerMessage answer = listener.handle(connectionId, message);
@@ -94,6 +105,8 @@ public class SocketServer extends AbstractSocketServer<ClientMessageType, Client
                 }
             } catch (EmptyMessageException | MessageReadingException e) {
                 e.printStackTrace();
+                gameServersToListen.remove(connectionId);
+                gameServersToSend.remove(connectionId);
             } catch (ExceedingLengthException | UnknownMessageTypeException | WrongStartBytesException e) {
                 ClientServerMessage errorMessage = ClientServerMessageUtils.createMessage(
                         ClientMessageType.ERROR,
@@ -103,7 +116,10 @@ public class SocketServer extends AbstractSocketServer<ClientMessageType, Client
             } catch (IOException | ServerEventListenerException e) {
                 System.err.println("Error handling connection: " + e.getMessage());
             } finally {
-                gameServersToListen.remove(socket);
+                if (gameServersToListen.contains(socket)) {
+                    gameServersToListen.remove(connectionId);
+                    gameServersToSend.remove(connectionId);
+                }
             }
         }).start();
     }
@@ -171,6 +187,7 @@ public class SocketServer extends AbstractSocketServer<ClientMessageType, Client
             System.out.println(GameServerMessageUtils.toString(ans));
             return ans;
         } catch (IOException e) {
+            gameServersToSend.remove(socket);
             throw new ServerException(e.getMessage());
         }
     }

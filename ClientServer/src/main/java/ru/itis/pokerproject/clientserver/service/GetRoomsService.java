@@ -19,7 +19,7 @@ public class GetRoomsService {
 
     public static byte[] getRooms() {
         if (!init) {
-            throw new ServerException();
+            throw new ServerException("Server is not initialized!");
         }
         GameServerMessage request = GameServerMessageUtils.createMessage(GameMessageType.GET_ROOMS_REQUEST, new byte[0]);
         List<GameServerMessage> responses = server.sendBroadcastRequestToGameServer(request);
@@ -28,7 +28,9 @@ public class GetRoomsService {
         // Объединяем все данные о комнатах
         byte joinSymbol = '\n';
         int length = responses.stream().mapToInt(m -> m.getData().length).sum() + responses.size() - 1;
-
+        if (length == -1) {
+            return new byte[0];
+        }
         byte[] result = new byte[length];
         int currentPos = 0;
         for (GameServerMessage message: responses) {

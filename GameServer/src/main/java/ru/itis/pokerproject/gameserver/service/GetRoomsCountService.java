@@ -3,8 +3,7 @@ package ru.itis.pokerproject.gameserver.service;
 import ru.itis.pokerproject.gameserver.server.SocketServer;
 import ru.itis.pokerproject.shared.template.server.ServerException;
 
-
-public class GetRoomsInfoService {
+public class GetRoomsCountService {
     private static SocketServer server = null;
     private static boolean init = false;
 
@@ -13,11 +12,10 @@ public class GetRoomsInfoService {
         init = true;
     }
 
-    public static byte[] getRooms() {
+    public static byte[] getRoomsCount() {
         if (!init) {
             throw new ServerException("Server is not initialized!");
         }
-        String info = String.join("\n", server.getRoomsInfo());
-        return info.getBytes();
+        return String.valueOf(server.getRoomsInfo().size()).getBytes();
     }
 }

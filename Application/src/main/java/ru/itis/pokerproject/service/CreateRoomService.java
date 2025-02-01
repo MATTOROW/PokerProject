@@ -6,23 +6,24 @@ import ru.itis.pokerproject.shared.protocol.clientserver.ClientServerMessageUtil
 import ru.itis.pokerproject.shared.template.client.Client;
 import ru.itis.pokerproject.shared.template.client.ClientException;
 
-public class GetRoomsService {
+import java.util.UUID;
+
+public class CreateRoomService {
     private final Client<ClientMessageType, ClientServerMessage> client;
 
-    public GetRoomsService(Client<ClientMessageType,ClientServerMessage> client) {
+    public CreateRoomService(Client<ClientMessageType,ClientServerMessage> client) {
         this.client = client;
     }
 
-    public String[] getRoomsInfo() throws ClientException {
-        ClientServerMessage message = ClientServerMessageUtils.createMessage(ClientMessageType.GET_ROOMS_REQUEST, new byte[0]);
+    public UUID createRoom(int maxPlayers, long maxBet) throws ClientException {
+        ClientServerMessage message = ClientServerMessageUtils.createMessage(
+                ClientMessageType.CREATE_ROOM_REQUEST, "%d;%d".formatted(maxPlayers, maxBet).getBytes()
+        );
         ClientServerMessage response = client.sendMessage(message);
-        if (response.getType() == ClientMessageType.GET_ROOMS_RESPONSE) {
+        if (response.getType() == ClientMessageType.CREATE_ROOM_RESPONSE) {
             String data = new String(response.getData());
-            if (data.isEmpty()) {
-                return new String[0];
-            }
-            String[] parts = data.split("\n");
-            return parts;
+            UUID code = UUID.fromString(new String(data));
+            return code;
         } else {
             throw new ClientException(new String(response.getData()));
         }

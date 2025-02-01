@@ -1,6 +1,8 @@
 package ru.itis.pokerproject.gameserver.server;
 
 import ru.itis.pokerproject.gameserver.models.Room;
+import ru.itis.pokerproject.gameserver.service.CreateRoomService;
+import ru.itis.pokerproject.gameserver.service.GetRoomsCountService;
 import ru.itis.pokerproject.gameserver.service.GetRoomsInfoService;
 import ru.itis.pokerproject.shared.protocol.clientserver.ClientMessageType;
 import ru.itis.pokerproject.shared.protocol.clientserver.ClientServerMessage;
@@ -29,6 +31,7 @@ public class SocketServer extends AbstractSocketServer<GameMessageType, GameServ
     private Socket clientServerToListen;
     private final String clientServerHost;
     private final int clientServerPort;
+    private final List<ServerEventListener<GameMessageType, GameServerMessage>> clientServerListeners;
     private List<Room> rooms;
 
     private final UUID id = UUID.randomUUID();
@@ -37,12 +40,16 @@ public class SocketServer extends AbstractSocketServer<GameMessageType, GameServ
         super(port);
         this.clientServerHost = clientServerHost;
         this.clientServerPort = clientServerPort;
+        clientServerListeners = new ArrayList<>();
+
         GetRoomsInfoService.init(this);
+        CreateRoomService.init(this);
+        GetRoomsCountService.init(this);
 
         // Проверка общения между серверами.
         rooms = new ArrayList<>();
-        rooms.add(new Room(5, 100));
-        rooms.add(new Room(2, 1000));
+//        rooms.add(new Room(5, 100));
+//        rooms.add(new Room(2, 1000));
     }
 
     protected void handleConnection(Socket socket) {
@@ -86,7 +93,7 @@ public class SocketServer extends AbstractSocketServer<GameMessageType, GameServ
                 while (!clientServerToListen.isClosed()) {
                     GameServerMessage message = GameServerMessageUtils.readMessage(inputStream);
 
-                    for (ServerEventListener<GameMessageType, GameServerMessage> listener : listeners) {
+                    for (ServerEventListener<GameMessageType, GameServerMessage> listener : clientServerListeners) {
                         if (message.getType() == listener.getType()) {
                             GameServerMessage answer = listener.handle(connectionId, message);
                             sendMessageToClientServer(answer);
@@ -106,6 +113,13 @@ public class SocketServer extends AbstractSocketServer<GameMessageType, GameServ
                 System.err.println("Error handling connection: " + e.getMessage());
             }
         }).start();
+    }
+
+    public void registerClientServerListener(ServerEventListener<GameMessageType, GameServerMessage> listener) throws ServerException {
+        if (started) {
+            throw new ServerException("Server has been started already.");
+        }
+        this.clientServerListeners.add(listener);
     }
 
     @Override
@@ -189,5 +203,11 @@ public class SocketServer extends AbstractSocketServer<GameMessageType, GameServ
 
     public Set<String> getRoomsInfo() {
         return rooms.stream().map(Room::getRoomInfo).collect(Collectors.toSet());
+    }
+
+    public UUID createRoom(int maxPlayers, long minBet) {
+        Room newRoom = new Room(maxPlayers, minBet);
+        rooms.add(newRoom);
+        return newRoom.getCode();
     }
 }

@@ -11,9 +11,11 @@ public enum ClientMessageType {
     GET_USER_DATA_RESPONSE,         // Ответ на запрос получения данных пользователя
     UPDATE_USER_DATA_REQUEST,       // Запрос на обновление данных пользователя
     UPDATE_USER_DATA_RESPONSE,      // Ответ на запрос обновления данных пользователя
-    REGISTER_GAME_SERVER_REQUEST,    // Запрос на подключение нового игрового сервера
-    REGISTER_GAME_SERVER_RESPONSE,   // Ответ на запрос подключения нового игрового сервера
+    REGISTER_GAME_SERVER_REQUEST,   // Запрос на подключение нового игрового сервера
+    REGISTER_GAME_SERVER_RESPONSE,  // Ответ на запрос подключения нового игрового сервера
     GET_ROOMS_REQUEST,              // Запрос на получение списка комнат
     GET_ROOMS_RESPONSE,             // Ответ на запрос получения списка комнат
+    CREATE_ROOM_REQUEST,            // Запрос на создание комнаты
+    CREATE_ROOM_RESPONSE,           // Ответ на запрос на создание комнаты
     ERROR                           // Ошибка
 }

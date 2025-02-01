@@ -17,6 +17,10 @@ public class Room {
         this.minBet = minBet;
     }
 
+    public UUID getCode() {
+        return this.code;
+    }
+
     public void addPlayer(Socket player) {
         players.add(player);
     }

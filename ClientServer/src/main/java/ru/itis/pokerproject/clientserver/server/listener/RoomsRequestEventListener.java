@@ -11,8 +11,14 @@ public class RoomsRequestEventListener implements ServerEventListener<ClientMess
     @Override
     public ClientServerMessage handle(int connectionId, ClientServerMessage message) throws ServerEventListenerException {
         byte[] data = GetRoomsService.getRooms();
+        ClientServerMessage answer;
+        if (data.length == 0) {
+            answer = ClientServerMessageUtils.createMessage(ClientMessageType.ERROR, "There is no servers now. Try later.".getBytes());
+        } else {
+            answer = ClientServerMessageUtils.createMessage(ClientMessageType.GET_ROOMS_RESPONSE, data);
+        }
         System.out.println("Меня тоже вызвали!");
-        return ClientServerMessageUtils.createMessage(ClientMessageType.GET_ROOMS_RESPONSE, data);
+        return answer;
     }
 
     @Override

@@ -3,8 +3,9 @@ package ru.itis.pokerproject.gameserver.service;
 import ru.itis.pokerproject.gameserver.server.SocketServer;
 import ru.itis.pokerproject.shared.template.server.ServerException;
 
+import java.util.UUID;
 
-public class GetRoomsInfoService {
+public class CreateRoomService {
     private static SocketServer server = null;
     private static boolean init = false;
 
@@ -13,11 +14,11 @@ public class GetRoomsInfoService {
         init = true;
     }
 
-    public static byte[] getRooms() {
+    public static byte[] createRoom(int maxPlayers, long minBet) {
         if (!init) {
             throw new ServerException("Server is not initialized!");
         }
-        String info = String.join("\n", server.getRoomsInfo());
-        return info.getBytes();
+        UUID code = server.createRoom(maxPlayers, minBet);
+        return code.toString().getBytes();
     }
 }
