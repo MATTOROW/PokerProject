@@ -17,5 +17,7 @@ public enum ClientMessageType {
     GET_ROOMS_RESPONSE,             // Ответ на запрос получения списка комнат
     CREATE_ROOM_REQUEST,            // Запрос на создание комнаты
     CREATE_ROOM_RESPONSE,           // Ответ на запрос на создание комнаты
+    CONNECT_TO_ROOM_REQUEST,        // Запрос на подключение к комнате
+    CONNECT_TO_ROOM_RESPONSE,       // Ответ на запрос на подключение к комнате
     ERROR                           // Ошибка
 }

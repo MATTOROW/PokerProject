@@ -1,9 +1,7 @@
 package ru.itis.pokerproject.gameserver;
 
 import ru.itis.pokerproject.gameserver.server.SocketServer;
-import ru.itis.pokerproject.gameserver.server.listener.CreateRoomEventListener;
-import ru.itis.pokerproject.gameserver.server.listener.GetRoomsCountEventListener;
-import ru.itis.pokerproject.gameserver.server.listener.GetRoomsEventListener;
+import ru.itis.pokerproject.gameserver.server.listener.*;
 
 public class GameServer {
     private static final int PORT = 30000;
@@ -16,6 +14,7 @@ public class GameServer {
             server.registerClientServerListener(new GetRoomsEventListener());
             server.registerClientServerListener(new CreateRoomEventListener());
             server.registerClientServerListener(new GetRoomsCountEventListener());
+            server.registerClientServerListener(new FindRoomEventListener());
             server.start();
             server.connect();
         } catch (Exception ex) {

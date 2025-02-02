@@ -9,6 +9,8 @@ public enum GameMessageType {
     GET_ROOMS_RESPONSE,
     CREATE_ROOM_REQUEST,
     CREATE_ROOM_RESPONSE,
+    FIND_ROOM_REQUEST,
+    FIND_ROOM_RESPONSE,
     READY,
     RAISE,
     FOLD,

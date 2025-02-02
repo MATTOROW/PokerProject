@@ -5,6 +5,7 @@ import ru.itis.pokerproject.clientserver.server.listener.CreateRoomEventListener
 import ru.itis.pokerproject.clientserver.server.listener.LoginEventListener;
 import ru.itis.pokerproject.clientserver.server.listener.RegisterEventListener;
 import ru.itis.pokerproject.clientserver.server.listener.RoomsRequestEventListener;
+import ru.itis.pokerproject.clientserver.server.listener.ConnectToRoomEventListener;
 
 public class ClientServer {
     private static final int PORT = 25000;
@@ -16,6 +17,7 @@ public class ClientServer {
             server.registerListener(new RegisterEventListener());
             server.registerListener(new RoomsRequestEventListener());
             server.registerListener(new CreateRoomEventListener());
+            server.registerListener(new ConnectToRoomEventListener());
             server.start();
         } catch (Exception ex) {
             ex.printStackTrace();

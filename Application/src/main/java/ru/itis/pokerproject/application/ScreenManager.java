@@ -2,7 +2,9 @@ package ru.itis.pokerproject.application;
 
 import javafx.scene.Scene;
 import javafx.stage.Stage;
+import ru.itis.pokerproject.network.SocketClient;
 import ru.itis.pokerproject.service.AuthService;
+import ru.itis.pokerproject.service.ConnectToRoomService;
 import ru.itis.pokerproject.service.CreateRoomService;
 import ru.itis.pokerproject.service.GetRoomsService;
 import ru.itis.pokerproject.shared.protocol.clientserver.ClientMessageType;
@@ -18,18 +20,20 @@ public class ScreenManager {
     private final AuthService authService;
     private final GetRoomsService getRoomsService;
     private final CreateRoomService createRoomService;
+    private final ConnectToRoomService connectToRoomService;
 
-    public ScreenManager(Stage primaryStage, ConnectionErrorHandler errorHandler, Client<ClientMessageType, ClientServerMessage> client) {
+    public ScreenManager(Stage primaryStage, ConnectionErrorHandler errorHandler, SocketClient client) {
         this.authService = new AuthService(client);
         this.getRoomsService = new GetRoomsService(client);
         this.createRoomService = new CreateRoomService(client);
+        this.connectToRoomService = new ConnectToRoomService(client);
 
         this.primaryStage = primaryStage;
 
         // Создаем экраны один раз
         this.loginScreen = new LoginScreen(authService, this);
         this.registerScreen = new RegisterScreen(authService, this);
-        this.roomsScreen = new RoomsScreen(getRoomsService, createRoomService,this);
+        this.roomsScreen = new RoomsScreen(getRoomsService, createRoomService, connectToRoomService, this);
 
         // Устанавливаем начальный экран
         primaryStage.setScene(new Scene(loginScreen.getView()));
@@ -52,5 +56,9 @@ public class ScreenManager {
         roomsScreen.refreshRooms();
         primaryStage.getScene().setRoot(roomsScreen.getView());
         primaryStage.sizeToScene();
+    }
+
+    public Stage getPrimaryStage() {
+        return primaryStage;
     }
 }

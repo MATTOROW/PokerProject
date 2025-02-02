@@ -5,7 +5,6 @@ import javafx.geometry.Pos;
 import javafx.scene.control.*;
 import javafx.scene.layout.VBox;
 import javafx.stage.Modality;
-import javafx.stage.Stage;
 import ru.itis.pokerproject.shared.template.client.ClientException;
 import ru.itis.pokerproject.service.AuthService;
 import ru.itis.pokerproject.shared.dto.response.AccountResponse;

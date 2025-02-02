@@ -1,9 +1,9 @@
 package ru.itis.pokerproject.gameserver.server;
 
 import ru.itis.pokerproject.gameserver.models.Room;
-import ru.itis.pokerproject.gameserver.service.CreateRoomService;
-import ru.itis.pokerproject.gameserver.service.GetRoomsCountService;
-import ru.itis.pokerproject.gameserver.service.GetRoomsInfoService;
+import ru.itis.pokerproject.gameserver.models.game.Player;
+import ru.itis.pokerproject.gameserver.server.listener.ConnectToRoomEventListener;
+import ru.itis.pokerproject.gameserver.service.*;
 import ru.itis.pokerproject.shared.protocol.clientserver.ClientMessageType;
 import ru.itis.pokerproject.shared.protocol.clientserver.ClientServerMessage;
 import ru.itis.pokerproject.shared.protocol.clientserver.ClientServerMessageUtils;
@@ -28,7 +28,7 @@ public class SocketServer extends AbstractSocketServer<GameMessageType, GameServ
     private final String clientServerHost;
     private final int clientServerPort;
     private final List<ServerEventListener<GameMessageType, GameServerMessage>> clientServerListeners;
-    private List<Room> rooms;
+    private Map<UUID, Room> rooms;
 
     private final UUID id = UUID.randomUUID();
 
@@ -41,8 +41,10 @@ public class SocketServer extends AbstractSocketServer<GameMessageType, GameServ
         GetRoomsInfoService.init(this);
         CreateRoomService.init(this);
         GetRoomsCountService.init(this);
+        FindRoomService.init(this);
+        ConnectToRoomService.init(this);
 
-        rooms = new ArrayList<>();
+        rooms = new HashMap<>();
     }
 
     protected void handleConnection(Socket socket) {
@@ -50,25 +52,21 @@ public class SocketServer extends AbstractSocketServer<GameMessageType, GameServ
         new Thread(() -> {
             int connectionId = sockets.lastIndexOf(socket);
             try (InputStream inputStream = socket.getInputStream()) {
-                while (!socket.isClosed()) {
-                    boolean handled = false;
-                    GameServerMessage message = GameServerMessageUtils.readMessage(inputStream);
-
-                    for (ServerEventListener<GameMessageType, GameServerMessage> listener : listeners) {
-                        if (message.getType() == listener.getType()) {
-                            handled = true;
-                            GameServerMessage answer = listener.handle(connectionId, message);
-                            sendMessage(connectionId, answer);
-                        }
+                GameServerMessage message = GameServerMessageUtils.readMessage(inputStream);
+                ConnectToRoomEventListener listener = new ConnectToRoomEventListener();
+                if (message.getType() == listener.getType()) {
+                    GameServerMessage answer = listener.handle(connectionId, message);
+                    sendMessage(connectionId, answer);
+                    if (answer.getType() == GameMessageType.ERROR) {
+                        sockets.remove(socket);
                     }
-                    if (!handled) {
-                        GameServerMessage error = GameServerMessageUtils.createMessage(
-                                GameMessageType.ERROR,
-                                "You are not allowed to receive data using this message type: %s."
-                                        .formatted(message.getType()).getBytes()
-                        );
-                        sendMessage(connectionId, error);
-                    }
+                } else {
+                    GameServerMessage error = GameServerMessageUtils.createMessage(
+                            GameMessageType.ERROR,
+                            "You are not allowed to receive data using this message type: %s."
+                                    .formatted(message.getType()).getBytes()
+                    );
+                    sendMessage(connectionId, error);
                 }
             } catch (EmptyMessageException | MessageReadingException e) {
                 sockets.remove(socket);
@@ -78,10 +76,10 @@ public class SocketServer extends AbstractSocketServer<GameMessageType, GameServ
                         "Error while connecting to server.".getBytes()
                 );
                 sendMessage(connectionId, errorMessage);
-            } catch (IOException | ServerEventListenerException e) {
-                System.err.println("Error handling connection: " + e.getMessage());
-            } finally {
                 sockets.remove(socket);
+            } catch (IOException | ServerEventListenerException e) {
+                sockets.remove(socket);
+                System.err.println("Error handling connection: " + e.getMessage());
             }
         }).start();
     }
@@ -143,12 +141,11 @@ public class SocketServer extends AbstractSocketServer<GameMessageType, GameServ
             throw new ServerException("Server hasn't been started yet.");
         }
         try {
-            Socket clientServer = sockets.get(connectionId);
-            clientServer.getOutputStream().write(GameServerMessageUtils.getBytes(message));
-            clientServer.getOutputStream().flush();
+            Socket socket = sockets.get(connectionId);
+            socket.getOutputStream().write(GameServerMessageUtils.getBytes(message));
+            socket.getOutputStream().flush();
         } catch (IOException e) {
             e.printStackTrace();
-
         }
     }
 
@@ -209,6 +206,7 @@ public class SocketServer extends AbstractSocketServer<GameMessageType, GameServ
 
             while (true) {
                 Socket s = server.accept();
+                System.out.println("Принял connect!");
                 handleConnection(s);
             }
         } catch (IOException e) {
@@ -217,13 +215,28 @@ public class SocketServer extends AbstractSocketServer<GameMessageType, GameServ
     }
 
     public Set<String> getRoomsInfo() {
-        return rooms.stream().map(Room::getRoomInfo).collect(Collectors.toSet());
+        return rooms.entrySet().stream()
+                .map(entry -> "%s;%s".formatted(entry.getKey().toString(), entry.getValue().getRoomInfo()))
+                .collect(Collectors.toSet());
     }
 
     public UUID createRoom(int maxPlayers, long minBet) {
         Room newRoom = new Room(maxPlayers, minBet);
-        rooms.add(newRoom);
-        return newRoom.getCode();
+        UUID code = UUID.randomUUID();
+        rooms.put(code, newRoom);
+        return code;
+    }
+
+    public boolean findRoom(UUID code) {
+        return rooms.containsKey(code);
+    }
+
+    public String addPlayerToRoom(UUID code, int connectionId, String username, long money) {
+        boolean added = rooms.get(code).addPlayer(new Player(sockets.get(connectionId), username, money));
+        if (!added) {
+            return null;
+        }
+        return rooms.get(code).getRoomAndPlayersInfo();
     }
 
     private static String getLocalIPv4() {

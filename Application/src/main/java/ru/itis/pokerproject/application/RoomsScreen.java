@@ -2,6 +2,7 @@ package ru.itis.pokerproject.application;
 
 import javafx.application.Platform;
 import javafx.beans.property.SimpleLongProperty;
+import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
@@ -11,14 +12,20 @@ import javafx.scene.layout.VBox;
 import javafx.scene.text.Font;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
+import ru.itis.pokerproject.model.PlayerInfo;
+import ru.itis.pokerproject.service.ConnectToRoomService;
 import ru.itis.pokerproject.service.CreateRoomService;
 import ru.itis.pokerproject.service.GetRoomsService;
 import ru.itis.pokerproject.shared.template.client.ClientException;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class RoomsScreen {
     private final VBox view;
     private final GetRoomsService getRoomsService;
     private final CreateRoomService createRoomService;
+    private final ConnectToRoomService connectToRoomService;
     private final ScreenManager screenManager;
     private final TableView<TableRow> roomsTableView = new TableView<>();
 
@@ -26,10 +33,11 @@ public class RoomsScreen {
     private final SimpleStringProperty usernameProperty = new SimpleStringProperty();
     private final SimpleLongProperty moneyProperty = new SimpleLongProperty();
 
-    public RoomsScreen(GetRoomsService getRoomsService, CreateRoomService createRoomService, ScreenManager screenManager) {
+    public RoomsScreen(GetRoomsService getRoomsService, CreateRoomService createRoomService, ConnectToRoomService connectToRoomService, ScreenManager screenManager) {
         this.getRoomsService = getRoomsService;
         this.createRoomService = createRoomService;
         this.screenManager = screenManager;
+        this.connectToRoomService = connectToRoomService;
 
         // Получаем данные из сессии
         usernameProperty.set(SessionStorage.getUsername());
@@ -62,7 +70,24 @@ public class RoomsScreen {
         TableColumn<TableRow, String> minBetColumn = new TableColumn<>("Мин. ставка");
         minBetColumn.setCellValueFactory(cellData -> cellData.getValue().minBetProperty());
 
-        roomsTableView.getColumns().addAll(idColumn, playersColumn, minBetColumn);
+        // Добавляем кнопку "Подключиться" в таблицу
+        TableColumn<TableRow, Button> connectColumn = new TableColumn<>("Подключиться");
+        connectColumn.setCellValueFactory(cellData -> new SimpleObjectProperty<>(cellData.getValue().getConnectButton()));
+
+        connectColumn.setCellFactory(param -> new TableCell<TableRow, Button>() {
+            @Override
+            protected void updateItem(Button item, boolean empty) {
+                super.updateItem(item, empty);
+                if (!empty) {
+                    item.setOnAction(event -> handleConnectButtonClick(getTableRow().getItem()));
+                    setGraphic(item);
+                } else {
+                    setGraphic(null);
+                }
+            }
+        });
+
+        roomsTableView.getColumns().addAll(idColumn, playersColumn, minBetColumn, connectColumn);
 
         // Кнопки
         Button createRoomButton = new Button("Создать комнату");
@@ -96,7 +121,53 @@ public class RoomsScreen {
     }
 
     public VBox getView() {
+
         return view;
+    }
+
+    private void handleConnectButtonClick(TableRow room) {
+        String roomId = room.idProperty().get();
+        new Thread(() -> {
+            try {
+                String responseData = connectToRoomService.connectToRoom(roomId, SessionStorage.getToken());
+                Platform.runLater(() -> showGameScreen(responseData));
+            } catch (ClientException e) {
+                Platform.runLater(() -> {
+                    Alert alert = new Alert(Alert.AlertType.ERROR);
+                    alert.setTitle("Ошибка");
+                    alert.setContentText("Не удалось подключиться к комнате: " + e.getMessage());
+                    alert.show();
+                });
+            }
+        }).start();
+    }
+
+    private void showGameScreen(String responseData) {
+        String[] lines = responseData.split("\n");
+        String[] roomInfo = lines[0].split(";");
+        int maxPlayers = Integer.parseInt(roomInfo[0]);
+        int currentPlayers = Integer.parseInt(roomInfo[1]);
+        int minBet = Integer.parseInt(roomInfo[2]);
+
+        List<PlayerInfo> players = new ArrayList<>();
+        PlayerInfo myPlayer = null;
+
+        for (int i = 1; i < lines.length; i++) {
+            String[] playerData = lines[i].split(";");
+            String username = playerData[0];
+            long money = Long.parseLong(playerData[1]);
+            boolean isReady = playerData[2].equals("1");
+
+            PlayerInfo player = new PlayerInfo(username, money, isReady);
+            players.add(player);
+
+            if (username.equals(SessionStorage.getUsername())) {
+                myPlayer = player;
+            }
+        }
+
+        Stage stage = screenManager.getPrimaryStage();
+        GameScreen.show(stage, maxPlayers, currentPlayers, minBet, players, myPlayer);
     }
 
     public void refreshRooms() {
@@ -180,11 +251,14 @@ public class RoomsScreen {
         private final SimpleStringProperty id;
         private final SimpleStringProperty players;
         private final SimpleStringProperty minBet;
+        private final Button connectButton;
 
         public TableRow(String id, String players, String minBet) {
             this.id = new SimpleStringProperty(id);
             this.players = new SimpleStringProperty(players);
             this.minBet = new SimpleStringProperty(minBet);
+            this.connectButton = new Button("Подключиться");
+            this.connectButton.setStyle("-fx-background-color: #4CAF50; -fx-text-fill: white; -fx-font-weight: bold;");
         }
 
         public SimpleStringProperty idProperty() {
@@ -198,10 +272,13 @@ public class RoomsScreen {
         public SimpleStringProperty minBetProperty() {
             return minBet;
         }
+
+        public Button getConnectButton() {
+            return connectButton;
+        }
     }
 
     public void updateUserData() {
-        System.out.println(SessionStorage.getToken());
         usernameProperty.set(SessionStorage.getUsername());
         moneyProperty.set(SessionStorage.getMoney());
     }

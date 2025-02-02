@@ -1,5 +1,6 @@
 package ru.itis.pokerproject.clientserver.server;
 
+import ru.itis.pokerproject.clientserver.service.ConnectToRoomService;
 import ru.itis.pokerproject.clientserver.service.CreateRoomService;
 import ru.itis.pokerproject.clientserver.service.GetRoomsService;
 import ru.itis.pokerproject.shared.protocol.clientserver.ClientMessageType;
@@ -33,6 +34,7 @@ public class SocketServer extends AbstractSocketServer<ClientMessageType, Client
         gameServerListeners = new ArrayList<>();
         GetRoomsService.init(this);
         CreateRoomService.init(this);
+        ConnectToRoomService.init(this);
     }
 
     public void registerGameServerListener(ServerEventListener<ClientMessageType, ClientServerMessage> listener) throws ServerException {
@@ -225,4 +227,9 @@ public class SocketServer extends AbstractSocketServer<ClientMessageType, Client
         return answers;
     }
 
+    public String getServerAddr(int serverId) {
+        return "%s:%s".formatted(gameServersToSend.get(serverId).getInetAddress().getHostAddress(),
+                gameServersToSend.get(serverId).getPort()
+        );
+    }
 }

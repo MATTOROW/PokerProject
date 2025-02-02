@@ -21,7 +21,7 @@ public class LoginService {
             return new byte[0];
         }
         if (encoder.matches(password, account.getPassword())) {
-            return "%s;%s;$s".formatted(account.getUsername(), account.getMoney(), generateToken(account)).getBytes();
+            return "%s;%s;%s".formatted(account.getUsername(), account.getMoney(), generateToken(account)).getBytes();
         }
         return new byte[0];
     }
