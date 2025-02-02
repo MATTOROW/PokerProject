@@ -49,15 +49,7 @@ public class LoginScreen {
                     }
                 } catch (ClientException e) {
                     e.printStackTrace();
-                    Platform.runLater(
-                            () -> {
-                                Alert alert = new Alert(Alert.AlertType.ERROR);
-                                alert.initModality(Modality.APPLICATION_MODAL);
-                                alert.setTitle("Ошибка!");
-                                alert.setContentText(e.getMessage());
-                                alert.show();
-                            }
-                    );
+                    manager.showErrorScreen(e.getMessage());
                 } finally {
                     // Скрываем анимацию и активируем кнопку
                     Platform.runLater(() -> {

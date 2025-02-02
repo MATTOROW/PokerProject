@@ -72,10 +72,18 @@ public class SocketClient implements Client<ClientMessageType, ClientServerMessa
         try{
             gameSocket.getOutputStream().write(GameServerMessageUtils.getBytes(message));
             gameSocket.getOutputStream().flush();
-            return GameServerMessageUtils.readMessage(gameSocket.getInputStream());
+            return readMessageFromGameServer();
         }
         catch(IOException ex){
             throw new ClientException("Can't send message.", ex);
+        }
+    }
+
+    public GameServerMessage readMessageFromGameServer() throws ClientException {
+        try {
+            return GameServerMessageUtils.readMessage(gameSocket.getInputStream());
+        } catch (IOException e) {
+            throw new ClientException("Can't read a message from game server");
         }
     }
 

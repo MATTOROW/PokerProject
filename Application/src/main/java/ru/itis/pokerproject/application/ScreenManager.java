@@ -1,6 +1,9 @@
 package ru.itis.pokerproject.application;
 
+import javafx.application.Platform;
 import javafx.scene.Scene;
+import javafx.scene.control.Alert;
+import javafx.stage.Modality;
 import javafx.stage.Stage;
 import ru.itis.pokerproject.network.SocketClient;
 import ru.itis.pokerproject.service.AuthService;
@@ -56,6 +59,18 @@ public class ScreenManager {
         roomsScreen.refreshRooms();
         primaryStage.getScene().setRoot(roomsScreen.getView());
         primaryStage.sizeToScene();
+    }
+
+    public void showErrorScreen(String message) {
+        Platform.runLater(
+                () -> {
+                    Alert alert = new Alert(Alert.AlertType.ERROR);
+                    alert.initModality(Modality.APPLICATION_MODAL);
+                    alert.setTitle("Ошибка!");
+                    alert.setContentText(message);
+                    alert.show();
+                }
+        );
     }
 
     public Stage getPrimaryStage() {

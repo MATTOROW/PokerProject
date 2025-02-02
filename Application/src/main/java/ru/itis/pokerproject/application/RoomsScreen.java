@@ -26,17 +26,17 @@ public class RoomsScreen {
     private final GetRoomsService getRoomsService;
     private final CreateRoomService createRoomService;
     private final ConnectToRoomService connectToRoomService;
-    private final ScreenManager screenManager;
+    private final ScreenManager manager;
     private final TableView<TableRow> roomsTableView = new TableView<>();
 
     // Данные сессии
     private final SimpleStringProperty usernameProperty = new SimpleStringProperty();
     private final SimpleLongProperty moneyProperty = new SimpleLongProperty();
 
-    public RoomsScreen(GetRoomsService getRoomsService, CreateRoomService createRoomService, ConnectToRoomService connectToRoomService, ScreenManager screenManager) {
+    public RoomsScreen(GetRoomsService getRoomsService, CreateRoomService createRoomService, ConnectToRoomService connectToRoomService, ScreenManager manager) {
         this.getRoomsService = getRoomsService;
         this.createRoomService = createRoomService;
-        this.screenManager = screenManager;
+        this.manager = manager;
         this.connectToRoomService = connectToRoomService;
 
         // Получаем данные из сессии
@@ -109,7 +109,7 @@ public class RoomsScreen {
         logoutButton.setPrefWidth(100);
         logoutButton.setOnAction(event -> {
             SessionStorage.clear();
-            Platform.runLater(screenManager::showLoginScreen);
+            Platform.runLater(manager::showLoginScreen);
         });
 
         HBox buttonBox = new HBox(10, refreshButton, logoutButton, createRoomButton);
@@ -132,12 +132,7 @@ public class RoomsScreen {
                 String responseData = connectToRoomService.connectToRoom(roomId, SessionStorage.getToken());
                 Platform.runLater(() -> showGameScreen(responseData));
             } catch (ClientException e) {
-                Platform.runLater(() -> {
-                    Alert alert = new Alert(Alert.AlertType.ERROR);
-                    alert.setTitle("Ошибка");
-                    alert.setContentText("Не удалось подключиться к комнате: " + e.getMessage());
-                    alert.show();
-                });
+                
             }
         }).start();
     }
@@ -166,7 +161,7 @@ public class RoomsScreen {
             }
         }
 
-        Stage stage = screenManager.getPrimaryStage();
+        Stage stage = manager.getPrimaryStage();
         GameScreen.show(stage, maxPlayers, currentPlayers, minBet, players, myPlayer);
     }
 
@@ -186,12 +181,7 @@ public class RoomsScreen {
                     }
                 });
             } catch (ClientException e) {
-                Platform.runLater(() -> {
-                    Alert alert = new Alert(Alert.AlertType.ERROR);
-                    alert.setTitle("Ошибка");
-                    alert.setContentText("Не удалось загрузить список комнат: " + e.getMessage());
-                    alert.show();
-                });
+                manager.showErrorScreen("Не удалось подключиться к комнате: " + e.getMessage());
             }
         }).start();
     }
@@ -217,7 +207,7 @@ public class RoomsScreen {
                 long minBet = Long.parseLong(minBetField.getText());
 
                 if (maxPlayers <= 0 || minBet < 0) {
-                    showAlert("Ошибка", "Введите корректные данные");
+                    manager.showErrorScreen("Введите корректные данные");
                     return;
                 }
 
@@ -225,9 +215,9 @@ public class RoomsScreen {
                 roomsTableView.getItems().add(new TableRow(roomId, "0/" + maxPlayers, String.valueOf(minBet)));
                 dialogStage.close();
             } catch (NumberFormatException e) {
-                showAlert("Ошибка", "Введите числовые значения!");
+                manager.showErrorScreen("Введите числовые значения!");
             } catch (ClientException e) {
-                showAlert("Ошибка", "Ошибка создания комнаты: " + e.getMessage());
+                manager.showErrorScreen("Ошибка создания комнаты: " + e.getMessage());
             }
         });
 
@@ -238,13 +228,6 @@ public class RoomsScreen {
         Scene dialogScene = new Scene(dialogLayout);
         dialogStage.setScene(dialogScene);
         dialogStage.showAndWait();
-    }
-
-    private void showAlert(String title, String message) {
-        Alert alert = new Alert(Alert.AlertType.ERROR);
-        alert.setTitle(title);
-        alert.setContentText(message);
-        alert.show();
     }
 
     public static class TableRow {

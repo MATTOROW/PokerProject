@@ -49,23 +49,11 @@ public class RegisterScreen {
             new Thread(() -> {
                 try {
                     boolean registered = authService.register(username, password);
-                    if (registered) {
-                        System.out.println("Успешная регистрация!");
-                        // Возврат на экран логина
-                        Platform.runLater(manager::showLoginScreen);
-                    } else {
-                        System.out.println("Ошибка регистрации!");
-                    }
+                    System.out.println("Успешная регистрация!");
+                    // Возврат на экран логина
+                    Platform.runLater(manager::showLoginScreen);
                 } catch (ClientException e) {
-                    Platform.runLater(
-                            () -> {
-                                Alert alert = new Alert(Alert.AlertType.ERROR);
-                                alert.initModality(Modality.APPLICATION_MODAL);
-                                alert.setTitle("Ошибка!");
-                                alert.setContentText(e.getMessage());
-                                alert.show();
-                            }
-                    );
+                    manager.showErrorScreen(e.getMessage());
                 } finally {
                     // Скрываем анимацию и активируем кнопку
                     javafx.application.Platform.runLater(() -> {
