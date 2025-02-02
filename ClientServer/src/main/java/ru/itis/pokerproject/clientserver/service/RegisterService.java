@@ -9,10 +9,15 @@ import ru.itis.pokerproject.shared.dto.response.AccountResponse;
 public class RegisterService {
     private static final AccountRepository accountRepository = new AccountRepository();
     private static final AccountEntityMapper accountEntityMapper = new AccountEntityMapper();
+    private static final BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
 
     private RegisterService() {}
 
     public static AccountResponse register(String username, String password) {
-        return accountEntityMapper.toResponse(accountRepository.create(username, password).orElse(null));
+        AccountEntity account = accountRepository.create(username, encoder.encode(password)).orElse(null);
+        if (account == null) {
+            return null;
+        }
+        return accountEntityMapper.toResponse(account);
     }
 }

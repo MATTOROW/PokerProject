@@ -10,7 +10,6 @@ import ru.itis.pokerproject.shared.protocol.clientserver.ClientServerMessageUtil
 
 public class AuthService {
     private final Client<ClientMessageType, ClientServerMessage> client;
-    private final static BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
 
     public AuthService(Client<ClientMessageType,ClientServerMessage> client) {
         this.client = client;
@@ -33,7 +32,7 @@ public class AuthService {
     }
 
     public AccountResponse register(String username, String password) throws ClientException {
-        String messageData = username + ";" + encoder.encode(password);
+        String messageData = username + ";" + password;
         ClientServerMessage message = ClientServerMessageUtils.createMessage(
                 ClientMessageType.REGISTER_REQUEST,
                     messageData.getBytes()

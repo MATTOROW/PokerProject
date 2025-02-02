@@ -52,7 +52,7 @@ public class RegisterScreen {
                     if (account != null) {
                         System.out.println("Успешная регистрация!");
                         // Возврат на экран логина
-                        manager.showLoginScreen();
+                        Platform.runLater(manager::showLoginScreen);
                     } else {
                         System.out.println("Ошибка регистрации!");
                     }

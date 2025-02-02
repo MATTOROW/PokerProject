@@ -223,7 +223,6 @@ public class SocketServer extends AbstractSocketServer<GameMessageType, GameServ
     public UUID createRoom(int maxPlayers, long minBet) {
         Room newRoom = new Room(maxPlayers, minBet);
         rooms.add(newRoom);
-        System.out.println(rooms.size());
         return newRoom.getCode();
     }
 

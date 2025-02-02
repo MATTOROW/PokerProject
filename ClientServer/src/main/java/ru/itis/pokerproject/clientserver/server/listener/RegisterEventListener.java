@@ -19,7 +19,7 @@ public class RegisterEventListener implements ServerEventListener<ClientMessageT
         if (parts.length != 2) {
             ClientServerMessage errorMessage = ClientServerMessageUtils.createMessage(
                     ClientMessageType.ERROR,
-                    "Invalid message format. Expected username;hashedPassword".getBytes()
+                    "Invalid message format. Expected username;password".getBytes()
             );
             return errorMessage;
         }

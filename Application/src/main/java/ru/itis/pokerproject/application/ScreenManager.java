@@ -48,6 +48,8 @@ public class ScreenManager {
     }
 
     public void showRoomsScreen() {
+        roomsScreen.updateUserData();
+        roomsScreen.refreshRooms();
         primaryStage.getScene().setRoot(roomsScreen.getView());
         primaryStage.sizeToScene();
     }

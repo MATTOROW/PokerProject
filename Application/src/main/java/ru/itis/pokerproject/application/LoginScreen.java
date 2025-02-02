@@ -42,8 +42,8 @@ public class LoginScreen {
                 try {
                     AccountResponse account = authService.login(username, password);
                     if (account != null) {
-                        // Переход на главный экран (можно добавить позже)
                         System.out.println("Успешный вход!");
+                        SessionStorage.setSessionData(account.username(), account.money(), ""); // Токен пока пустой
                         Platform.runLater(manager::showRoomsScreen);
                     } else {
                         System.out.println("Ошибка входа!");
@@ -61,7 +61,7 @@ public class LoginScreen {
                     );
                 } finally {
                     // Скрываем анимацию и активируем кнопку
-                    javafx.application.Platform.runLater(() -> {
+                    Platform.runLater(() -> {
                         progressIndicator.setVisible(false);
                         loginButton.setDisable(false);
                     });
