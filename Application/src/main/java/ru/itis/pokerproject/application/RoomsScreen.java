@@ -132,7 +132,7 @@ public class RoomsScreen {
                 String responseData = connectToRoomService.connectToRoom(roomId, SessionStorage.getToken());
                 Platform.runLater(() -> showGameScreen(responseData));
             } catch (ClientException e) {
-                
+                manager.showErrorScreen(e.getMessage());
             }
         }).start();
     }
