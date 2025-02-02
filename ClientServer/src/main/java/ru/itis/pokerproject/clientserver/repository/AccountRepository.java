@@ -1,7 +1,6 @@
 package ru.itis.pokerproject.clientserver.repository;
 
 import ru.itis.pokerproject.clientserver.config.Database;
-import ru.itis.pokerproject.clientserver.mapper.AccountEntityMapper;
 import ru.itis.pokerproject.clientserver.mapper.AccountRowMapper;
 import ru.itis.pokerproject.clientserver.model.AccountEntity;
 

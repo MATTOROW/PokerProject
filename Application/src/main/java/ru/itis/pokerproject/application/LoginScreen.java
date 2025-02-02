@@ -43,7 +43,7 @@ public class LoginScreen {
                     AccountResponse account = authService.login(username, password);
                     if (account != null) {
                         System.out.println("Успешный вход!");
-                        SessionStorage.setSessionData(account.username(), account.money(), ""); // Токен пока пустой
+                        SessionStorage.setSessionData(account.username(), account.money(), account.token()); // Токен пока пустой
                         Platform.runLater(manager::showRoomsScreen);
                     } else {
                         System.out.println("Ошибка входа!");

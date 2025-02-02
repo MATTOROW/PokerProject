@@ -25,13 +25,13 @@ public class AuthService {
             if (response.getType() == ClientMessageType.LOGIN_RESPONSE) {
                 String data = new String(response.getData());
                 String[] parts = data.split(";");
-                return new AccountResponse(parts[0], Long.parseLong(parts[1]));
+                return new AccountResponse(parts[0], Long.parseLong(parts[1]), parts[2]);
             } else {
                 throw new ClientException(new String(response.getData()));
             }
     }
 
-    public AccountResponse register(String username, String password) throws ClientException {
+    public boolean register(String username, String password) throws ClientException {
         String messageData = username + ";" + password;
         ClientServerMessage message = ClientServerMessageUtils.createMessage(
                 ClientMessageType.REGISTER_REQUEST,
@@ -39,9 +39,7 @@ public class AuthService {
         );
         ClientServerMessage response = client.sendMessage(message);
         if (response.getType() == ClientMessageType.REGISTER_RESPONSE) {
-            String data = new String(response.getData());
-            String[] parts = data.split(";");
-            return new AccountResponse(parts[0], Long.parseLong(parts[1]));
+            return true;
         } else {
             throw new ClientException(new String(response.getData()));
         }

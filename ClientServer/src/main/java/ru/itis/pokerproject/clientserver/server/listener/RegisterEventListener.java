@@ -12,7 +12,7 @@ import java.nio.charset.StandardCharsets;
 
 public class RegisterEventListener implements ServerEventListener<ClientMessageType, ClientServerMessage> {
     @Override
-    public ClientServerMessage  handle(int connectionId, ClientServerMessage message) throws ServerEventListenerException {
+    public ClientServerMessage handle(int connectionId, ClientServerMessage message) throws ServerEventListenerException {
         // Could be more optimized and safer
         String data = new String(message.getData(), StandardCharsets.UTF_8);
         String[] parts = data.split(";", 2);
@@ -26,8 +26,8 @@ public class RegisterEventListener implements ServerEventListener<ClientMessageT
         String username = parts[0];
         String password = parts[1];
 
-        AccountResponse account = RegisterService.register(username, password);
-        if (account == null) {
+        byte[] registerData = RegisterService.register(username, password);
+        if (registerData == null) {
             ClientServerMessage errorMessage = ClientServerMessageUtils.createMessage(
                     ClientMessageType.ERROR,
                     "Error while creating account. Probably, this username is already in use.".getBytes()
@@ -36,7 +36,7 @@ public class RegisterEventListener implements ServerEventListener<ClientMessageT
         }
         ClientServerMessage answer = ClientServerMessageUtils.createMessage(
                 ClientMessageType.REGISTER_RESPONSE,
-                "%s;%s".formatted(account.username(), account.money()).getBytes()
+                registerData
         );
 
         return answer;

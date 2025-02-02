@@ -27,8 +27,8 @@ public class LoginEventListener implements ServerEventListener<ClientMessageType
         String username = parts[0];
         String password = parts[1];
 
-        AccountResponse account = LoginService.login(username, password);
-        if (account == null) {
+        byte[] loginData = LoginService.login(username, password);
+        if (loginData.length == 0) {
             ClientServerMessage errorMessage = ClientServerMessageUtils.createMessage(
                     ClientMessageType.ERROR,
                     "Invalid username or password.".getBytes()
@@ -38,7 +38,7 @@ public class LoginEventListener implements ServerEventListener<ClientMessageType
         }
         ClientServerMessage answer = ClientServerMessageUtils.createMessage(
                 ClientMessageType.LOGIN_RESPONSE,
-                "%s;%s".formatted(account.username(), account.money()).getBytes()
+                loginData
         );
 
         return answer;

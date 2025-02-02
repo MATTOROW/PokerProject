@@ -201,6 +201,7 @@ public class RoomsScreen {
     }
 
     public void updateUserData() {
+        System.out.println(SessionStorage.getToken());
         usernameProperty.set(SessionStorage.getUsername());
         moneyProperty.set(SessionStorage.getMoney());
     }

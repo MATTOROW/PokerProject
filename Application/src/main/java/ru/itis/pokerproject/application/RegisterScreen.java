@@ -48,8 +48,8 @@ public class RegisterScreen {
             // Запускаем задачу в отдельном потоке
             new Thread(() -> {
                 try {
-                    AccountResponse account = authService.register(username, password);
-                    if (account != null) {
+                    boolean registered = authService.register(username, password);
+                    if (registered) {
                         System.out.println("Успешная регистрация!");
                         // Возврат на экран логина
                         Platform.runLater(manager::showLoginScreen);
