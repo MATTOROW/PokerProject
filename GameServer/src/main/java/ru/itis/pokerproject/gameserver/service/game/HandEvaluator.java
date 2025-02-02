@@ -1,4 +1,4 @@
-package ru.itis.pokerproject.gameserver.service;
+package ru.itis.pokerproject.gameserver.service.game;
 
 import ru.itis.pokerproject.gameserver.models.game.*;
 

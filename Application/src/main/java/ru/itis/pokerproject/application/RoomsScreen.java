@@ -12,6 +12,7 @@ import javafx.scene.layout.VBox;
 import javafx.scene.text.Font;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
+import ru.itis.pokerproject.model.Game;
 import ru.itis.pokerproject.model.PlayerInfo;
 import ru.itis.pokerproject.service.ConnectToRoomService;
 import ru.itis.pokerproject.service.CreateRoomService;
@@ -129,40 +130,14 @@ public class RoomsScreen {
         String roomId = room.idProperty().get();
         new Thread(() -> {
             try {
-                String responseData = connectToRoomService.connectToRoom(roomId, SessionStorage.getToken());
-                Platform.runLater(() -> showGameScreen(responseData));
+                GameScreen gameScreen = new GameScreen(0, 0, 0, new ArrayList<>(), null, manager);
+                Game.setGameScreen(gameScreen);
+                connectToRoomService.connectToRoom(roomId, SessionStorage.getToken());
+                Platform.runLater(() -> manager.getPrimaryStage().getScene().setRoot(gameScreen));
             } catch (ClientException e) {
                 manager.showErrorScreen(e.getMessage());
             }
         }).start();
-    }
-
-    private void showGameScreen(String responseData) {
-        String[] lines = responseData.split("\n");
-        String[] roomInfo = lines[0].split(";");
-        int maxPlayers = Integer.parseInt(roomInfo[0]);
-        int currentPlayers = Integer.parseInt(roomInfo[1]);
-        int minBet = Integer.parseInt(roomInfo[2]);
-
-        List<PlayerInfo> players = new ArrayList<>();
-        PlayerInfo myPlayer = null;
-
-        for (int i = 1; i < lines.length; i++) {
-            String[] playerData = lines[i].split(";");
-            String username = playerData[0];
-            long money = Long.parseLong(playerData[1]);
-            boolean isReady = playerData[2].equals("1");
-
-            PlayerInfo player = new PlayerInfo(username, money, isReady);
-            players.add(player);
-
-            if (username.equals(SessionStorage.getUsername())) {
-                myPlayer = player;
-            }
-        }
-
-        Stage stage = manager.getPrimaryStage();
-        GameScreen.show(stage, maxPlayers, currentPlayers, minBet, players, myPlayer);
     }
 
     public void refreshRooms() {

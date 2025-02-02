@@ -41,16 +41,11 @@ public class Player {
         this.money -= money;
     }
 
-    public void sendMessage(GameServerMessage message) {
-        try {
-            socket.getOutputStream().write(GameServerMessageUtils.getBytes(message));
-            socket.getOutputStream().flush();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
     public String getInfo() {
         return "%s;%s".formatted(username, money);
+    }
+
+    public Socket getSocket() {
+        return socket;
     }
 }

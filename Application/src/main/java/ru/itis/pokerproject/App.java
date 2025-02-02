@@ -4,6 +4,8 @@ import javafx.application.Application;
 import javafx.stage.Stage;
 import ru.itis.pokerproject.application.ConnectionErrorHandler;
 import ru.itis.pokerproject.application.ScreenManager;
+import ru.itis.pokerproject.network.listener.ConnectToRoomEventListener;
+import ru.itis.pokerproject.network.listener.ErrorEventListener;
 import ru.itis.pokerproject.shared.template.client.ClientException;
 import ru.itis.pokerproject.network.SocketClient;
 
@@ -22,6 +24,8 @@ public class App extends Application {
         ConnectionErrorHandler handler = new ConnectionErrorHandler(client);
 
         try {
+            client.registerListener(new ConnectToRoomEventListener());
+            client.registerListener(new ErrorEventListener());
             client.connect();
         } catch (ClientException e) {
             handler.showConnectionErrorDialog(primaryStage);

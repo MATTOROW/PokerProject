@@ -2,13 +2,8 @@ package ru.itis.pokerproject.gameserver.models;
 
 import ru.itis.pokerproject.gameserver.models.game.Player;
 
-import java.net.Socket;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CopyOnWriteArrayList;
 
 public class Room {
     private final int maxPlayers;
@@ -55,9 +50,5 @@ public class Room {
             answer.append("\n");
         }
         return answer.toString();
-    }
-
-    public void startGame() {
-
     }
 }

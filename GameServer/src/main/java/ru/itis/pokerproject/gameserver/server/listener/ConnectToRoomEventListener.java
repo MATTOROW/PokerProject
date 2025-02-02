@@ -9,7 +9,6 @@ import ru.itis.pokerproject.shared.protocol.gameserver.GameServerMessageUtils;
 import ru.itis.pokerproject.shared.template.listener.ServerEventListener;
 import ru.itis.pokerproject.shared.template.listener.ServerEventListenerException;
 
-import java.util.Date;
 import java.util.UUID;
 
 public class ConnectToRoomEventListener implements ServerEventListener<GameMessageType, GameServerMessage> {
