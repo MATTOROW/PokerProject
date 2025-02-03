@@ -6,10 +6,7 @@ import javafx.scene.control.Alert;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import ru.itis.pokerproject.network.SocketClient;
-import ru.itis.pokerproject.service.AuthService;
-import ru.itis.pokerproject.service.ConnectToRoomService;
-import ru.itis.pokerproject.service.CreateRoomService;
-import ru.itis.pokerproject.service.GetRoomsService;
+import ru.itis.pokerproject.service.*;
 import ru.itis.pokerproject.shared.protocol.clientserver.ClientMessageType;
 import ru.itis.pokerproject.shared.protocol.clientserver.ClientServerMessage;
 import ru.itis.pokerproject.shared.template.client.Client;
@@ -24,12 +21,14 @@ public class ScreenManager {
     private final GetRoomsService getRoomsService;
     private final CreateRoomService createRoomService;
     private final ConnectToRoomService connectToRoomService;
+    private final SendReadyStatusService sendReadyStatusService;
 
     public ScreenManager(Stage primaryStage, ConnectionErrorHandler errorHandler, SocketClient client) {
         this.authService = new AuthService(client);
         this.getRoomsService = new GetRoomsService(client);
         this.createRoomService = new CreateRoomService(client);
         this.connectToRoomService = new ConnectToRoomService(client);
+        this.sendReadyStatusService = new SendReadyStatusService(client);
 
         this.primaryStage = primaryStage;
 
@@ -75,5 +74,9 @@ public class ScreenManager {
 
     public Stage getPrimaryStage() {
         return primaryStage;
+    }
+
+    public SendReadyStatusService getSendReadyStatusService() {
+        return this.sendReadyStatusService;
     }
 }

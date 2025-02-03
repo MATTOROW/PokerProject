@@ -50,7 +50,4 @@ public abstract class AbstractSocketServer<E extends Enum<E>, M extends Abstract
 
     @Override
     public abstract void sendMessage(int connectionId, M message) throws ServerException;
-
-    @Override
-    public abstract void sendBroadCastMessage(M message) throws ServerException;
 }

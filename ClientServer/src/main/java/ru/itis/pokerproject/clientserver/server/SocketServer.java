@@ -157,23 +157,6 @@ public class SocketServer extends AbstractSocketServer<ClientMessageType, Client
         }
     }
 
-    @Override
-    public void sendBroadCastMessage(ClientServerMessage message) throws ServerException {
-        if (!started) {
-            throw new ServerException("Server hasn't been started yet.");
-        }
-        try {
-            byte[] rawMessage = ClientServerMessageUtils.getBytes(message);
-            for (Socket socket : sockets) {
-                socket.getOutputStream().write(rawMessage);
-                socket.getOutputStream().flush();
-
-            }
-        } catch (IOException e) {
-            throw new ServerException("Can't send message.", e);
-        }
-    }
-
     public void sendMessageToGameServer(int serverConnectionId, ClientServerMessage message) {
         if (!started) {
             throw new ServerException("Server hasn't been started yet.");

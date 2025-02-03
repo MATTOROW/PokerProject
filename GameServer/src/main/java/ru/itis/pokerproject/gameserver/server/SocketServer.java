@@ -1,8 +1,10 @@
 package ru.itis.pokerproject.gameserver.server;
 
-import ru.itis.pokerproject.gameserver.models.Room;
-import ru.itis.pokerproject.gameserver.models.game.Player;
+import ru.itis.pokerproject.gameserver.model.GameHandler;
+import ru.itis.pokerproject.gameserver.model.Room;
+import ru.itis.pokerproject.gameserver.model.game.Player;
 import ru.itis.pokerproject.gameserver.server.listener.ConnectToRoomEventListener;
+import ru.itis.pokerproject.gameserver.server.listener.PlayerReadyEventListener;
 import ru.itis.pokerproject.gameserver.service.*;
 import ru.itis.pokerproject.shared.protocol.clientserver.ClientMessageType;
 import ru.itis.pokerproject.shared.protocol.clientserver.ClientServerMessage;
@@ -20,6 +22,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.*;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 public class SocketServer extends AbstractSocketServer<GameMessageType, GameServerMessage> {
@@ -28,7 +31,7 @@ public class SocketServer extends AbstractSocketServer<GameMessageType, GameServ
     private final String clientServerHost;
     private final int clientServerPort;
     private final List<ServerEventListener<GameMessageType, GameServerMessage>> clientServerListeners;
-    private Map<UUID, Room> rooms;
+    private final RoomManager manager;
 
     private final UUID id = UUID.randomUUID();
 
@@ -36,29 +39,36 @@ public class SocketServer extends AbstractSocketServer<GameMessageType, GameServ
         super(port);
         this.clientServerHost = clientServerHost;
         this.clientServerPort = clientServerPort;
-        clientServerListeners = new ArrayList<>();
+        this.clientServerListeners = new ArrayList<>();
+        this.manager = new RoomManager(this);
 
         GetRoomsInfoService.init(this);
         CreateRoomService.init(this);
         GetRoomsCountService.init(this);
         FindRoomService.init(this);
         ConnectToRoomService.init(this);
-
-        rooms = new HashMap<>();
+        PlayerReadyService.init(this);
     }
 
     protected void handleConnection(Socket socket) {
         sockets.add(socket);
         new Thread(() -> {
             int connectionId = sockets.lastIndexOf(socket);
-            try (InputStream inputStream = socket.getInputStream()) {
-                GameServerMessage message = GameServerMessageUtils.readMessage(inputStream);
-                ConnectToRoomEventListener listener = new ConnectToRoomEventListener();
+            try {
+                InputStream inputStream = socket.getInputStream();
+                GameServerMessage message = readMessage(inputStream);
+                ConnectToRoomEventListener listener = new ConnectToRoomEventListener(this);
                 if (message.getType() == listener.getType()) {
                     GameServerMessage answer = listener.handle(connectionId, message);
                     sendMessage(connectionId, answer);
                     if (answer.getType() == GameMessageType.ERROR) {
                         sockets.remove(socket);
+                    } else {
+                        GameServerMessage ready = readMessage(inputStream);
+                        PlayerReadyEventListener readyListener = new PlayerReadyEventListener();
+                        if (answer.getType() == readyListener.getType()) {
+                            readyListener.handle(connectionId, ready);
+                        }
                     }
                 } else {
                     GameServerMessage error = GameServerMessageUtils.createMessage(
@@ -67,6 +77,7 @@ public class SocketServer extends AbstractSocketServer<GameMessageType, GameServ
                                     .formatted(message.getType()).getBytes()
                     );
                     sendMessage(connectionId, error);
+                    sockets.remove(socket);
                 }
             } catch (EmptyMessageException | MessageReadingException e) {
                 sockets.remove(socket);
@@ -90,7 +101,7 @@ public class SocketServer extends AbstractSocketServer<GameMessageType, GameServ
                 int connectionId = -1;
                 while (!clientServerToListen.isClosed()) {
                     boolean handled = false;
-                    GameServerMessage message = GameServerMessageUtils.readMessage(inputStream);
+                    GameServerMessage message = readMessage(inputStream);
 
                     for (ServerEventListener<GameMessageType, GameServerMessage> listener : clientServerListeners) {
                         if (message.getType() == listener.getType()) {
@@ -140,8 +151,15 @@ public class SocketServer extends AbstractSocketServer<GameMessageType, GameServ
         if (!started) {
             throw new ServerException("Server hasn't been started yet.");
         }
+        Socket socket = sockets.get(connectionId);
+        sendMessage(socket, message);
+    }
+
+    public void sendMessage(Socket socket, GameServerMessage message) {
+        if (!started) {
+            throw new ServerException("Server hasn't been started yet.");
+        }
         try {
-            Socket socket = sockets.get(connectionId);
             socket.getOutputStream().write(GameServerMessageUtils.getBytes(message));
             socket.getOutputStream().flush();
         } catch (IOException e) {
@@ -149,9 +167,19 @@ public class SocketServer extends AbstractSocketServer<GameMessageType, GameServ
         }
     }
 
-    @Override
-    public void sendBroadCastMessage(GameServerMessage message) throws ServerException {
+    public GameServerMessage readMessage(InputStream in) {
+        if (!started) {
+            throw new ServerException("Server hasn't been started yet.");
+        }
+        try {
+            return GameServerMessageUtils.readMessage(in);
+        } catch (MessageException e) {
+            throw new ServerException(e);
+        }
+    }
 
+    public Socket getSocket(int connectionId) {
+        return this.sockets.get(connectionId);
     }
 
     public void connect() {
@@ -214,29 +242,18 @@ public class SocketServer extends AbstractSocketServer<GameMessageType, GameServ
         }
     }
 
+    public RoomManager getRoomManager() {
+        return this.manager;
+    }
+
     public Set<String> getRoomsInfo() {
-        return rooms.entrySet().stream()
+        return  manager.getRooms().entrySet().stream()
                 .map(entry -> "%s;%s".formatted(entry.getKey().toString(), entry.getValue().getRoomInfo()))
                 .collect(Collectors.toSet());
     }
 
-    public UUID createRoom(int maxPlayers, long minBet) {
-        Room newRoom = new Room(maxPlayers, minBet);
-        UUID code = UUID.randomUUID();
-        rooms.put(code, newRoom);
-        return code;
-    }
-
     public boolean findRoom(UUID code) {
-        return rooms.containsKey(code);
-    }
-
-    public String addPlayerToRoom(UUID code, int connectionId, String username, long money) {
-        boolean added = rooms.get(code).addPlayer(new Player(sockets.get(connectionId), username, money));
-        if (!added) {
-            return null;
-        }
-        return rooms.get(code).getRoomAndPlayersInfo();
+        return manager.getRooms().containsKey(code);
     }
 
     private static String getLocalIPv4() {

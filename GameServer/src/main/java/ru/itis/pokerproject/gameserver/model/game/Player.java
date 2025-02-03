@@ -1,20 +1,18 @@
-package ru.itis.pokerproject.gameserver.models.game;
+package ru.itis.pokerproject.gameserver.model.game;
 
-import ru.itis.pokerproject.shared.protocol.gameserver.GameServerMessage;
-import ru.itis.pokerproject.shared.protocol.gameserver.GameServerMessageUtils;
-
-import java.io.IOException;
 import java.net.Socket;
 
 public class Player {
     private Socket socket;
     private String username;
     private long money;
+    private boolean isReady;
 
     public Player(Socket socket, String username, long money) {
         this.socket = socket;
         this.username = username;
         this.money = money;
+        this.isReady = false;
     }
 
     public Player(String username) {
@@ -33,6 +31,14 @@ public class Player {
         return money;
     }
 
+    public boolean isReady() {
+        return isReady;
+    }
+
+    public void setReady(boolean ready) {
+        isReady = ready;
+    }
+
     public void addMoney(long money) {
         this.money += money;
     }
@@ -42,7 +48,7 @@ public class Player {
     }
 
     public String getInfo() {
-        return "%s;%s".formatted(username, money);
+        return "%s;%s;%s".formatted(username, money, isReady ? 1 : 0);
     }
 
     public Socket getSocket() {

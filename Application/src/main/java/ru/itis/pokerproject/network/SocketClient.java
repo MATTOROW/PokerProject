@@ -1,9 +1,13 @@
 package ru.itis.pokerproject.network;
 
+import javafx.application.Platform;
+import ru.itis.pokerproject.model.Game;
 import ru.itis.pokerproject.network.listener.GameEventListener;
 import ru.itis.pokerproject.shared.protocol.clientserver.ClientMessageType;
 import ru.itis.pokerproject.shared.protocol.clientserver.ClientServerMessage;
 import ru.itis.pokerproject.shared.protocol.clientserver.ClientServerMessageUtils;
+import ru.itis.pokerproject.shared.protocol.exception.MessageException;
+import ru.itis.pokerproject.shared.protocol.gameserver.GameMessageType;
 import ru.itis.pokerproject.shared.protocol.gameserver.GameServerMessage;
 import ru.itis.pokerproject.shared.protocol.gameserver.GameServerMessageUtils;
 import ru.itis.pokerproject.shared.template.client.Client;
@@ -81,17 +85,20 @@ public class SocketClient implements Client<ClientMessageType, ClientServerMessa
     public void listenToGameServer() {
         new Thread(() -> {
             try {
-                while (gameSocket.isClosed() || gameSocket != null) {
+                while (gameSocket != null && !gameSocket.isClosed()) {
                     GameServerMessage message = readMessageFromGameServer();
                     for (GameEventListener listener: listeners) {
                         if (listener.getType() == message.getType()) {
                             listener.handle(message);
                         }
                     }
+                    if (message.getType() == GameMessageType.ERROR) {
+                        closeGameServer();
+                    }
                 }
             } catch (ClientException e) {
                 System.out.println("Lost connection with game server.");
-                throw new RuntimeException(e);
+                Platform.runLater(Game.getGameScreen().getManager()::showRoomsScreen);
             }
         }).start();
     }
@@ -114,7 +121,7 @@ public class SocketClient implements Client<ClientMessageType, ClientServerMessa
     public GameServerMessage readMessageFromGameServer() throws ClientException {
         try {
             return GameServerMessageUtils.readMessage(gameSocket.getInputStream());
-        } catch (IOException e) {
+        } catch (IOException | MessageException e) {
             e.printStackTrace();
             throw new ClientException("Can't read a message from game server");
         }
@@ -127,6 +134,17 @@ public class SocketClient implements Client<ClientMessageType, ClientServerMessa
             }
         } catch (IOException ex) {
             throw new ClientException("Can't close socket.", ex);
+        }
+    }
+
+    public void closeGameServer() throws ClientException {
+        try {
+            if (gameSocket != null && !gameSocket.isClosed()) {
+                gameSocket.close();
+                gameSocket = null;
+            }
+        } catch (IOException e) {
+            throw new ClientException("Can't close game server socket");
         }
     }
 

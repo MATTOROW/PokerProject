@@ -18,7 +18,7 @@ public class CreateRoomService {
         if (!init) {
             throw new ServerException("Server is not initialized!");
         }
-        UUID code = server.createRoom(maxPlayers, minBet);
+        UUID code = server.getRoomManager().createRoom(maxPlayers, minBet);
         return code.toString().getBytes();
     }
 }

@@ -1,4 +1,4 @@
-package ru.itis.pokerproject.gameserver.models.game;
+package ru.itis.pokerproject.gameserver.model.game;
 
 public record Card(Suit suit, Value value) implements Comparable<Card> {
 

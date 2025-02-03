@@ -10,7 +10,5 @@ public interface Server<E extends Enum<E>, M extends AbstractServerMessage<E>> {
 
     void sendMessage(int connectionId, M message) throws ServerException;
 
-    void sendBroadCastMessage(M message) throws ServerException;
-
     void start() throws ServerException;
 }

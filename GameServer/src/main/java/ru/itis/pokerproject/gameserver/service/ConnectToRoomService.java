@@ -2,7 +2,10 @@ package ru.itis.pokerproject.gameserver.service;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
-import ru.itis.pokerproject.gameserver.models.game.Player;
+import ru.itis.pokerproject.gameserver.model.GameHandler;
+import ru.itis.pokerproject.gameserver.model.Room;
+import ru.itis.pokerproject.gameserver.model.game.Player;
+import ru.itis.pokerproject.gameserver.server.RoomManager;
 import ru.itis.pokerproject.gameserver.server.SocketServer;
 import ru.itis.pokerproject.shared.template.server.ServerException;
 
@@ -34,10 +37,24 @@ public class ConnectToRoomService {
         if (expiration.before(new Date(System.currentTimeMillis()))) {
             return null;
         }
-        String roomInfo = server.addPlayerToRoom(code, connectionId, username, money);
-        if (roomInfo == null) {
-            return new byte[0];
+        RoomManager roomManager = server.getRoomManager();
+        Room room = roomManager.getRoom(code);
+        GameHandler handler = roomManager.getGameHandler(code);
+
+        if (room == null || handler == null) {
+            return new byte[0]; // Комната не найдена
         }
-        return roomInfo.getBytes();
+
+        boolean added = handler.addPlayer(new Player(server.getSocket(connectionId), username, money));
+        if (!added) {
+            return new byte[0]; // Комната заполнена
+        }
+
+        return room.getRoomAndPlayersInfo().getBytes();
+//        String roomInfo = server.addPlayerToRoom(code, connectionId, username, money);
+//        if (roomInfo == null) {
+//            return new byte[0];
+//        }
+//        return roomInfo.getBytes();
     }
 }

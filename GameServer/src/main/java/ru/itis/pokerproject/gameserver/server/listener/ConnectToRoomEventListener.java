@@ -1,7 +1,6 @@
 package ru.itis.pokerproject.gameserver.server.listener;
 
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.Jwts;
+import ru.itis.pokerproject.gameserver.server.SocketServer;
 import ru.itis.pokerproject.gameserver.service.ConnectToRoomService;
 import ru.itis.pokerproject.shared.protocol.gameserver.GameMessageType;
 import ru.itis.pokerproject.shared.protocol.gameserver.GameServerMessage;
@@ -12,6 +11,12 @@ import ru.itis.pokerproject.shared.template.listener.ServerEventListenerExceptio
 import java.util.UUID;
 
 public class ConnectToRoomEventListener implements ServerEventListener<GameMessageType, GameServerMessage> {
+    private final SocketServer socketServer;
+
+    public ConnectToRoomEventListener(SocketServer socketServer) {
+        this.socketServer = socketServer;
+    }
+
     @Override
     public GameServerMessage handle(int connectionId, GameServerMessage message) throws ServerEventListenerException {
         String[] data = new String(message.getData()).split(";");

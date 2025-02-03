@@ -1,6 +1,7 @@
 package ru.itis.pokerproject.application;
 
 import javafx.geometry.Pos;
+import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
@@ -9,6 +10,8 @@ import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Ellipse;
 import ru.itis.pokerproject.model.PlayerInfo;
+import ru.itis.pokerproject.service.SendReadyStatusService;
+import ru.itis.pokerproject.shared.template.client.ClientException;
 
 import java.util.List;
 
@@ -26,6 +29,10 @@ public class GameScreen extends BorderPane {
     private final VBox leftPlayers = new VBox(30);
     private final VBox rightPlayers = new VBox(30);
     private VBox centerContainer;
+    private final Button readyButton;
+
+
+    private final SendReadyStatusService sendReadyStatusService;
 
     public GameScreen(int maxPlayers, int currentPlayers, long minBet, List<PlayerInfo> players, PlayerInfo myPlayer, ScreenManager manager) {
         this.maxPlayers = maxPlayers;
@@ -34,6 +41,12 @@ public class GameScreen extends BorderPane {
         this.players = players;
         this.myPlayer = myPlayer;
         this.manager = manager;
+
+        this.sendReadyStatusService = manager.getSendReadyStatusService();
+
+        readyButton = new Button("Готов");
+        readyButton.setStyle("-fx-font-size: 16px; -fx-padding: 10px;");
+        readyButton.setOnAction(e -> handleReadyButtonClick());
 
         setupUI();
 
@@ -71,7 +84,15 @@ public class GameScreen extends BorderPane {
         rightPlayers.getChildren().clear();
 
         if (myPlayer != null)  {
-            bottomPlayers.getChildren().add(createPlayerLabel(myPlayer));
+            VBox myPlayerBox = new VBox(10);
+            myPlayerBox.setAlignment(Pos.CENTER);
+            myPlayerBox.getChildren().add(createPlayerLabel(myPlayer));
+
+            if (!myPlayer.isReady()) {
+                myPlayerBox.getChildren().add(readyButton);
+            }
+
+            bottomPlayers.getChildren().add(myPlayerBox);
         }
 
         for (int i = 0; i < players.size(); i++) {
@@ -136,5 +157,14 @@ public class GameScreen extends BorderPane {
 
     public ScreenManager getManager() {
         return manager;
+    }
+
+    private void handleReadyButtonClick() {
+        readyButton.setDisable(true);
+        try {
+            sendReadyStatusService.sendStatus();
+        } catch (ClientException e) {
+            manager.showErrorScreen(e.getMessage());
+        }
     }
 }

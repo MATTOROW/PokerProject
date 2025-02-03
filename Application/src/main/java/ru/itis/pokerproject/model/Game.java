@@ -25,6 +25,11 @@ public class Game {
         gameScreen = screen;
     }
 
+    public static void updatePlayerStatus(String username, boolean status) {
+        PlayerInfo player = players.stream().filter(p -> p.getUsername().equals(username)).findFirst().get();
+        player.setReady(status);
+    }
+
     public static GameScreen getGameScreen() {
         return gameScreen;
     }

@@ -14,4 +14,16 @@ public class PlayerInfo {
     public String getUsername() { return username; }
     public long getMoney() { return money; }
     public boolean isReady() { return isReady; }
+
+    public void setUsername(String username) {
+        this.username = username;
+    }
+
+    public void setMoney(long money) {
+        this.money = money;
+    }
+
+    public void setReady(boolean ready) {
+        isReady = ready;
+    }
 }
