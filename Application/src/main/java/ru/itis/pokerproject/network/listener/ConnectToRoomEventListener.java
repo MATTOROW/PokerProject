@@ -7,7 +7,6 @@ import ru.itis.pokerproject.model.Game;
 import ru.itis.pokerproject.model.PlayerInfo;
 import ru.itis.pokerproject.shared.protocol.gameserver.GameMessageType;
 import ru.itis.pokerproject.shared.protocol.gameserver.GameServerMessage;
-import ru.itis.pokerproject.shared.template.client.ClientException;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -32,14 +31,17 @@ public class ConnectToRoomEventListener implements GameEventListener {
                 playerInfos.add(info);
             }
         }
-        GameScreen screen = Game.getGameScreen();
-        screen.setMaxPlayers(maxPlayers);
-        screen.setCurrentPlayers(currentPlayers);
-        screen.setMinBet(minBet);
-        screen.setPlayers(playerInfos);
-        screen.setMyPlayer(myPlayer);
-        Platform.runLater(screen::updateUI);
-
+        Game.setMaxPlayers(maxPlayers);
+        Game.setCurrentPlayers(currentPlayers);
+        Game.setMinBet(minBet);
+        Game.setPlayers(playerInfos);
+        Game.setMyPlayer(myPlayer);
+        GameScreen screen = new GameScreen(Game.getMaxPlayers(), Game.getCurrentPlayers(), Game.getMinBet(), Game.getPlayers(), Game.getMyPlayer(), Game.getManager());
+        Game.setGameScreen(screen);
+        Platform.runLater(() -> {
+            screen.updateUI();
+            Game.getManager().getPrimaryStage().getScene().setRoot(screen);
+        });
     }
 
     @Override

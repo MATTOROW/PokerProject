@@ -5,6 +5,7 @@ import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
+import ru.itis.pokerproject.model.Game;
 import ru.itis.pokerproject.network.SocketClient;
 import ru.itis.pokerproject.service.*;
 import ru.itis.pokerproject.shared.protocol.clientserver.ClientMessageType;
@@ -36,6 +37,7 @@ public class ScreenManager {
         this.loginScreen = new LoginScreen(authService, this);
         this.registerScreen = new RegisterScreen(authService, this);
         this.roomsScreen = new RoomsScreen(getRoomsService, createRoomService, connectToRoomService, this);
+        Game.setManager(this);
 
         // Устанавливаем начальный экран
         primaryStage.setScene(new Scene(loginScreen.getView()));

@@ -34,15 +34,23 @@ public class Room {
     }
 
     public Player getPlayer(String username) {
-        return players.stream().filter(p -> p.getUsername().equals(username)).findFirst().get();
+        return players.stream().filter(p -> p.getUsername().equals(username)).findFirst().orElse(null);
+    }
+
+    public Player getPlayer(int index) {
+        return players.get(index);
     }
 
     public Player getPlayer(Socket socket) {
-        return players.stream().filter(p -> p.getSocket().equals(socket)).findFirst().get();
+        return players.stream().filter(p -> p.getSocket().equals(socket)).findFirst().orElse(null);
     }
 
     public boolean containsPlayer(Socket socket) {
         return players.stream().filter(p -> p.getSocket().equals(socket)).toList().size() == 1;
+    }
+
+    public long getMinBet() {
+        return minBet;
     }
 
     public boolean allPlayersReady() {

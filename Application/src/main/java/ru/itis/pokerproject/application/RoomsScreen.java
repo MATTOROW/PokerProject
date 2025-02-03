@@ -130,10 +130,7 @@ public class RoomsScreen {
         String roomId = room.idProperty().get();
         new Thread(() -> {
             try {
-                GameScreen gameScreen = new GameScreen(0, 0, 0, new ArrayList<>(), null, manager);
-                Game.setGameScreen(gameScreen);
                 connectToRoomService.connectToRoom(roomId, SessionStorage.getToken());
-                Platform.runLater(() -> manager.getPrimaryStage().getScene().setRoot(gameScreen));
             } catch (ClientException e) {
                 manager.showErrorScreen(e.getMessage());
             }
@@ -143,9 +140,9 @@ public class RoomsScreen {
     public void refreshRooms() {
         new Thread(() -> {
             try {
+                roomsTableView.getItems().clear();
                 String[] roomsInfo = getRoomsService.getRoomsInfo();
                 Platform.runLater(() -> {
-                    roomsTableView.getItems().clear();
                     for (String room : roomsInfo) {
                         String[] parts = room.split(";");
                         if (parts.length == 4) {
@@ -156,7 +153,8 @@ public class RoomsScreen {
                     }
                 });
             } catch (ClientException e) {
-                manager.showErrorScreen("Не удалось подключиться к комнате: " + e.getMessage());
+                roomsTableView.getItems().clear();
+                manager.showErrorScreen(e.getMessage());
             }
         }).start();
     }

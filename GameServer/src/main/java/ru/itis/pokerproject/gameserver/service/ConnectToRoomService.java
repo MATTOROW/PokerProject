@@ -51,10 +51,5 @@ public class ConnectToRoomService {
         }
 
         return room.getRoomAndPlayersInfo().getBytes();
-//        String roomInfo = server.addPlayerToRoom(code, connectionId, username, money);
-//        if (roomInfo == null) {
-//            return new byte[0];
-//        }
-//        return roomInfo.getBytes();
     }
 }

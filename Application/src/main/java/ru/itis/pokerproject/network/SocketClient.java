@@ -83,7 +83,7 @@ public class SocketClient implements Client<ClientMessageType, ClientServerMessa
     }
 
     public void listenToGameServer() {
-        new Thread(() -> {
+        Thread thread = new Thread(() -> {
             try {
                 while (gameSocket != null && !gameSocket.isClosed()) {
                     GameServerMessage message = readMessageFromGameServer();
@@ -97,10 +97,12 @@ public class SocketClient implements Client<ClientMessageType, ClientServerMessa
                     }
                 }
             } catch (ClientException e) {
-                System.out.println("Lost connection with game server.");
-                Platform.runLater(Game.getGameScreen().getManager()::showRoomsScreen);
+                Platform.runLater(Game.getManager()::showRoomsScreen);
+                Platform.runLater(() -> Game.getManager().showErrorScreen("Lost connection with game server."));
             }
-        }).start();
+        });
+        thread.setDaemon(true);
+        thread.start();
     }
 
     @Override

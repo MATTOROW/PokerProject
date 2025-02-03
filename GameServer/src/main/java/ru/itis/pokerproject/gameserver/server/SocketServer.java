@@ -22,7 +22,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.*;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 public class SocketServer extends AbstractSocketServer<GameMessageType, GameServerMessage> {
@@ -48,6 +47,7 @@ public class SocketServer extends AbstractSocketServer<GameMessageType, GameServ
         FindRoomService.init(this);
         ConnectToRoomService.init(this);
         PlayerReadyService.init(this);
+        DisconnectFromRoomService.init(this);
     }
 
     protected void handleConnection(Socket socket) {
@@ -66,7 +66,8 @@ public class SocketServer extends AbstractSocketServer<GameMessageType, GameServ
                     } else {
                         GameServerMessage ready = readMessage(inputStream);
                         PlayerReadyEventListener readyListener = new PlayerReadyEventListener();
-                        if (answer.getType() == readyListener.getType()) {
+                        if (ready.getType() == readyListener.getType()) {
+                            System.out.println("Реально ready!");
                             readyListener.handle(connectionId, ready);
                         }
                     }
@@ -80,6 +81,8 @@ public class SocketServer extends AbstractSocketServer<GameMessageType, GameServ
                     sockets.remove(socket);
                 }
             } catch (EmptyMessageException | MessageReadingException e) {
+                System.out.println("Lost connect");
+                DisconnectFromRoomService.disconnectFromRoom(socket);
                 sockets.remove(socket);
             } catch (ExceedingLengthException | UnknownMessageTypeException | WrongStartBytesException e) {
                 GameServerMessage errorMessage = GameServerMessageUtils.createMessage(
@@ -171,11 +174,7 @@ public class SocketServer extends AbstractSocketServer<GameMessageType, GameServ
         if (!started) {
             throw new ServerException("Server hasn't been started yet.");
         }
-        try {
-            return GameServerMessageUtils.readMessage(in);
-        } catch (MessageException e) {
-            throw new ServerException(e);
-        }
+        return GameServerMessageUtils.readMessage(in);
     }
 
     public Socket getSocket(int connectionId) {

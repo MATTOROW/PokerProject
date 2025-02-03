@@ -87,9 +87,9 @@ public class GameScreen extends BorderPane {
             VBox myPlayerBox = new VBox(10);
             myPlayerBox.setAlignment(Pos.CENTER);
             myPlayerBox.getChildren().add(createPlayerLabel(myPlayer));
-
-            if (!myPlayer.isReady()) {
-                myPlayerBox.getChildren().add(readyButton);
+            myPlayerBox.getChildren().add(readyButton);
+            if (myPlayer.isReady()) {
+                readyButton.setDisable(true);
             }
 
             bottomPlayers.getChildren().add(myPlayerBox);

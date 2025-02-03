@@ -20,5 +20,14 @@ public enum GameMessageType {
     FOLD,
     CALL,
     CHECK,
+    ALL_IN,
+    PLAYER_RAISED,
+    PLAYER_FOLDED,
+    PLAYER_CALLED,
+    PLAYER_CHECKED,
+    PLAYER_ALL_INNED,
+    PLAYER_CARDS,
+    COMMUNITY_CARDS,
+    GAME_END,
     ERROR
 }
