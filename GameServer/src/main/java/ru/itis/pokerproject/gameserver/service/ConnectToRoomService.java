@@ -37,6 +37,9 @@ public class ConnectToRoomService {
         if (expiration.before(new Date(System.currentTimeMillis()))) {
             return null;
         }
+        if (money == 0) {
+            return null;
+        }
         RoomManager roomManager = server.getRoomManager();
         Room room = roomManager.getRoom(code);
         GameHandler handler = roomManager.getGameHandler(code);

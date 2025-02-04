@@ -25,7 +25,7 @@ public class ConnectToRoomEventListener implements ServerEventListener<GameMessa
         byte[] answerData = ConnectToRoomService.connectToRoom(connectionId, UUID.fromString(roomId), token);
         GameServerMessage answer;
         if (answerData == null) {
-            answer = GameServerMessageUtils.createMessage(GameMessageType.ERROR, "Token expired, connection refused".getBytes());
+            answer = GameServerMessageUtils.createMessage(GameMessageType.ERROR, "Either your token expired and you need to re login, or your money is 0, connection refused".getBytes());
         } else if (answerData.length == 0) {
             answer = GameServerMessageUtils.createMessage(GameMessageType.ERROR, "The room is full, you can't connect.".getBytes());
         } else {

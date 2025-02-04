@@ -16,6 +16,7 @@ public enum GameMessageType {
     PLAYER_IS_READY,
     READY,
     START_GAME,
+    WAITING_FOR_ACTION,
     RAISE,
     FOLD,
     CALL,

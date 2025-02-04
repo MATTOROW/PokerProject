@@ -87,10 +87,15 @@ public class SocketClient implements Client<ClientMessageType, ClientServerMessa
             try {
                 while (gameSocket != null && !gameSocket.isClosed()) {
                     GameServerMessage message = readMessageFromGameServer();
+                    boolean handled = false;
                     for (GameEventListener listener: listeners) {
                         if (listener.getType() == message.getType()) {
                             listener.handle(message);
+                            handled = true;
                         }
+                    }
+                    if (!handled) {
+                        System.out.println(new String(message.getData()));
                     }
                     if (message.getType() == GameMessageType.ERROR) {
                         closeGameServer();

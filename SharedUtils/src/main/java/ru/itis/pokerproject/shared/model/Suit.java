@@ -1,4 +1,4 @@
-package ru.itis.pokerproject.gameserver.model.game;
+package ru.itis.pokerproject.shared.model;
 
 public enum Suit {
     HEARTS, DIAMONDS, CLUBS, SPADES;

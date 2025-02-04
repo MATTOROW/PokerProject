@@ -4,7 +4,6 @@ import ru.itis.pokerproject.gameserver.model.game.Player;
 
 import java.net.Socket;
 import java.util.List;
-import java.util.UUID;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 public class Room {

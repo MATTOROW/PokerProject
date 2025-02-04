@@ -1,8 +1,8 @@
 package ru.itis.pokerproject.gameserver.service.game;
 
-import ru.itis.pokerproject.gameserver.model.game.Card;
-import ru.itis.pokerproject.gameserver.model.game.Suit;
-import ru.itis.pokerproject.gameserver.model.game.Value;
+import ru.itis.pokerproject.shared.model.Card;
+import ru.itis.pokerproject.shared.model.Suit;
+import ru.itis.pokerproject.shared.model.Value;
 
 import java.util.ArrayList;
 import java.util.Collections;

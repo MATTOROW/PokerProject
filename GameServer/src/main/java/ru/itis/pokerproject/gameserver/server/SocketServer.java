@@ -80,6 +80,7 @@ public class SocketServer extends AbstractSocketServer<GameMessageType, GameServ
                     sendMessage(connectionId, error);
                     sockets.remove(socket);
                 }
+                sockets.removeWithoutClosing(socket);
             } catch (EmptyMessageException | MessageReadingException e) {
                 System.out.println("Lost connect");
                 DisconnectFromRoomService.disconnectFromRoom(socket);
@@ -175,6 +176,17 @@ public class SocketServer extends AbstractSocketServer<GameMessageType, GameServ
             throw new ServerException("Server hasn't been started yet.");
         }
         return GameServerMessageUtils.readMessage(in);
+    }
+
+    public GameServerMessage readMessage(Socket socket) {
+        if (!started) {
+            throw new ServerException("Server hasn't been started yet.");
+        }
+        try {
+            return readMessage(socket.getInputStream());
+        } catch (IOException e) {
+            throw new ServerException("Can't read a message.");
+        }
     }
 
     public Socket getSocket(int connectionId) {

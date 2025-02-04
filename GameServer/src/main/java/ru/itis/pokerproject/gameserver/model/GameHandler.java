@@ -1,37 +1,40 @@
 package ru.itis.pokerproject.gameserver.model;
 
 
-import ru.itis.pokerproject.gameserver.model.game.Card;
+import ru.itis.pokerproject.shared.model.Card;
 import ru.itis.pokerproject.gameserver.model.game.HandWorth;
 import ru.itis.pokerproject.gameserver.model.game.Player;
 import ru.itis.pokerproject.gameserver.server.SocketServer;
 import ru.itis.pokerproject.gameserver.service.game.DeckGenerator;
 import ru.itis.pokerproject.gameserver.service.game.HandEvaluator;
-import ru.itis.pokerproject.gameserver.service.game.MainPot;
-import ru.itis.pokerproject.gameserver.service.game.SidePot;
+import ru.itis.pokerproject.shared.protocol.exception.MessageException;
 import ru.itis.pokerproject.shared.protocol.gameserver.GameMessageType;
 import ru.itis.pokerproject.shared.protocol.gameserver.GameServerMessage;
 import ru.itis.pokerproject.shared.protocol.gameserver.GameServerMessageUtils;
 
+import java.io.IOException;
 import java.net.Socket;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class GameHandler {
     private final Room room;
     private final SocketServer socketServer;
-    private MainPot mainPot = new MainPot();
-    private List<Player> activePlayers = new ArrayList<>(); // Кто еще в игре
-    private long currentBet = 0; // Текущая ставка
-    private int lastRaiserIndex = -1; // Кто последний делал RAISE
-    private int currentDealerIndex = -1;
+    private int currentDiller = -1; // Индекс дилера (по умолчанию -1, чтобы сдвигался).
+    private int currentStep; // Индекс текущего игрока
+    private int lastRaiser;   // Индекс последнего игрока, повысившего ставку
+    private long currentBet;  // Текущая ставка
+    private final long minBet;
+    private long pot; // Весь банк
+    private List<Player> activePlayers = new ArrayList<>();
     private List<Card> communityCards = new ArrayList<>();
-    private int currentStep = 0;
-    private Map<Player, HandWorth> handValues = new HashMap<>();
 
     public GameHandler(Room room, SocketServer socketServer) {
         this.room = room;
+        this.minBet = room.getMinBet();
         this.socketServer = socketServer;
-        this.currentBet = room.getMinBet();
     }
 
     public boolean addPlayer(Player player) {
@@ -50,6 +53,11 @@ public class GameHandler {
     public void removePlayer(Player player) {
         if (player != null) {
             room.removePlayer(player);
+            try {
+                player.getSocket().close();
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
             broadcastPlayerDisconnected(player.getUsername());
         }
     }
@@ -85,298 +93,310 @@ public class GameHandler {
             }
         }
     }
-    
-    private void sendBroadcastToActivePlayers(GameServerMessage message) {
-        for (Player p: activePlayers) {
-            socketServer.sendMessage(p.getSocket(), message);
-        }
-    }
-    
-    private void sendMessage(GameServerMessage message, int playerIndex) {
-        socketServer.sendMessage(room.getPlayer(playerIndex).getSocket(), message);
-    }
-    
-    private void sendError(Player player, String data) {
-        socketServer.sendMessage(player.getSocket(), GameServerMessageUtils.createMessage(GameMessageType.ERROR, data.getBytes()));
-    }
 
-    private void startGame() {
-        // Обновляем данные перед новой игрой
-        activePlayers = new ArrayList<>(room.getPlayers());
-        activePlayers.forEach(Player::reset); // Сбрасываем статусы
-        communityCards = new ArrayList<>();
-        mainPot = new MainPot();
-        lastRaiserIndex = -1;
-        currentStep = 0;
-        handValues = new HashMap<>();
-
-        if (currentDealerIndex == -1) {
-            currentDealerIndex = 0; // Первый запуск
-        } else {
-            currentDealerIndex = (currentDealerIndex + 1) % activePlayers.size();
-        }
-
-        // Генерируем колоду
-        List<Card> deck = DeckGenerator.generateRandomDeck(5 + 2 * activePlayers.size());
-
-        // Раздаем карты
-        for (int i = 0; i < activePlayers.size(); i++) {
-            Player player = activePlayers.get(i);
-            List<Card> playerCards = new ArrayList<>();
-            playerCards.add(deck.get(5 + i * 2));
-            playerCards.add(deck.get(6 + i * 2));
-            player.setCards(playerCards);
-            sendPlayerCards(player);
-        }
-
-        // Общие карты
-        communityCards.clear();
-        for (int i = 0; i < 5; i++) {
-            communityCards.add(deck.get(i));
-        }
-
-        // Обновляем банк и блайнды
-        mainPot = new MainPot();
-        lastRaiserIndex = -1;
-
-        // Блайнды
-        int smallBlindIndex = (currentDealerIndex + 1) % activePlayers.size();
-        int bigBlindIndex = (currentDealerIndex + 2) % activePlayers.size();
-
-        Player smallBlind = activePlayers.get(smallBlindIndex);
-        Player bigBlind = activePlayers.get(bigBlindIndex);
-
-        smallBlind.subtractMoney(currentBet);
-        smallBlind.addMoney(currentBet);
-        mainPot.addAmount(currentBet);
-
-        bigBlind.subtractMoney(currentBet * 2);
-        bigBlind.addMoney(currentBet * 2);
-        mainPot.addAmount(currentDealerIndex * 2);
-
-        // Первый ход после блайндов
-        currentStep = (currentDealerIndex + 3) % activePlayers.size();
-        requestPlayerAction(activePlayers.get(currentStep));
-    }
-
-    private void handleBet(Player player, GameMessageType betType, long betAmount) {
-        switch (betType) {
-            case FOLD:
-                player.setFolded(true);
-                checkEndRound();
-                sendBroadcastToActivePlayers(GameServerMessageUtils.createMessage(GameMessageType.PLAYER_FOLDED, player.getUsername().getBytes()));
-                break;
-
-            case CHECK:
-                if (player.getCurrentBet() < currentBet) {
-                    sendError(player, "You cannot CHECK, current bet is higher!");
-                } else {
-                    advanceTurn();
-                }
-                break;
-
-            case CALL:
-                long callAmount = currentBet - player.getCurrentBet();
-                if (player.getMoney() >= callAmount) {
-                    player.subtractMoney(callAmount);
-                    player.addBet(callAmount);
-                    mainPot.addAmount(callAmount);
-                    advanceTurn();
-                } else {
-                    sendError(player, "Not enough balance to CALL!");
-                }
-                break;
-
-            case RAISE:
-                if (betAmount <= currentBet) {
-                    sendError(player, "Raise must be higher than current bet!");
-                    return;
-                }
-
-                long raiseDiff = betAmount - player.getCurrentBet();
-                if (player.getMoney() >= raiseDiff) {
-                    player.subtractMoney(raiseDiff);
-                    player.addBet(raiseDiff);
-                    currentBet = betAmount;
-                    lastRaiserIndex = activePlayers.indexOf(player);
-                    mainPot.addAmount(raiseDiff);
-                    advanceTurn();
-                } else {
-                    sendError(player, "Not enough balance to RAISE!");
-                }
-                break;
-
-            case ALL_IN:
-                long allInAmount = player.getMoney();
-                player.subtractMoney(allInAmount);
-                player.addBet(allInAmount);
-
-                // Если ставка игрока меньше текущей, создаем SidePot
-                if (player.getCurrentBet() < currentBet) {
-                    SidePot sidePot = new SidePot(allInAmount, new ArrayList<>(activePlayers));
-                    mainPot.addSidePot(sidePot);
-                } else {
-                    mainPot.addAmount(allInAmount);
-                    currentBet = (int) allInAmount;
-                    lastRaiserIndex = activePlayers.indexOf(player);
-                }
-
-                player.setAllIn(true);
-                advanceTurn();
-                break;
-        }
-    }
-
-    private void checkEndRound() {
-        long activeCount = activePlayers.stream().filter(p -> !p.isFolded()).count();
-
-        if (activeCount == 1) {
-            endGame(activePlayers.stream().filter(p -> !p.isFolded()).findFirst().get());
-        }
-    }
-
-    private void endGame(Player winner) {
-        long totalWinnings = mainPot.getAmount();
-        winner.addMoney(totalWinnings);
-
-        GameServerMessage message = GameServerMessageUtils.createMessage(
-                GameMessageType.GAME_END,
-                (winner.getUsername() + ";WON;" + totalWinnings).getBytes()
-        );
-
-        sendBroadcastToActivePlayers(message);
-    }
-
-    private void sendPlayerCards(Player player) {
-        String cardData = String.join(";", player.getCardsInfo());
-        GameServerMessage message = GameServerMessageUtils.createMessage(GameMessageType.PLAYER_CARDS, cardData.getBytes());
+    private void sendMessage(Player player, GameServerMessage message) {
         socketServer.sendMessage(player.getSocket(), message);
     }
 
-    private void endBettingRound() {
-        if (communityCards.size() == 0) {
-            revealFlop();
-        } else if (communityCards.size() == 3) {
-            revealTurn();
-        } else if (communityCards.size() == 4) {
-            revealRiver();
-        } else {
-            determineWinner();
-        }
-    }
-
-    private void revealFlop() {
-        sendCommunityCards(0, 3);
-        startNewBettingRound();
-    }
-
-    private void revealTurn() {
-        sendCommunityCards(3, 4);
-        startNewBettingRound();
-    }
-
-    private void revealRiver() {
-        sendCommunityCards(4, 5);
-        startNewBettingRound();
-    }
-
-    private void sendCommunityCards(int from, int to) {
-        StringBuilder cardData = new StringBuilder();
-        for (int i = from; i < to; i++) {
-            cardData.append(communityCards.get(i)).append(";");
-        }
-        GameServerMessage message = GameServerMessageUtils.createMessage(GameMessageType.COMMUNITY_CARDS, cardData.toString().getBytes());
-        sendBroadcastToActivePlayers(message);
-    }
-
-    private void startNewBettingRound() {
-        currentBet = 0;
-        lastRaiserIndex = -1;
-
-        for (Player player : activePlayers) {
-            player.resetBet();
-        }
-
-        currentStep = (currentDealerIndex + 1) % activePlayers.size();
-        requestPlayerAction(activePlayers.get(currentStep));
-    }
-
-    private void determineWinner() {
-        Map<Player, HandWorth> handValues = new HashMap<>();
-
-        for (Player player : activePlayers) {
-            List<Card> allCards = new ArrayList<>(communityCards);
-            List<Card> playerCards = player.getCards();
-            allCards.add(playerCards.get(0));
-            allCards.add(playerCards.get(1));
-
-            HandWorth handWorth = HandEvaluator.calculateHandValue(allCards, 7);
-            handValues.put(player, handWorth);
-        }
-
-        Player winner = Collections.max(handValues.entrySet(), Map.Entry.comparingByValue()).getKey();
-
-        distributeWinnings(winner);
-    }
-
-    private void distributeWinnings(Player winner) {
-        long totalWinnings = mainPot.getAmount();
-        winner.addMoney(totalWinnings);
-
-        for (Player player : room.getPlayers()) {
-            boolean isWinner = player.equals(winner);
-            String messageData = (isWinner ? "1" : "0") + "\n";
-
-            for (Map.Entry<Player, HandWorth> entry : handValues.entrySet()) {
-                messageData += entry.getKey().getUsername() + ";" + entry.getValue().toString() + "\n";
-            }
-
-            GameServerMessage message = GameServerMessageUtils.createMessage(GameMessageType.GAME_END, messageData.getBytes());
-            socketServer.sendMessage(player.getSocket(), message);
-        }
-
-        resetGame();
-    }
-
-    private void resetGame() {
-        for (Player player : room.getPlayers()) {
-            player.reset();
-        }
-        activePlayers.clear();
-    }
-
-    private void advanceTurn() {
-        do {
-            currentStep = (currentStep + 1) % activePlayers.size();
-        } while (activePlayers.get(currentStep).isFolded() || activePlayers.get(currentStep).isAllIn());
-
-        if (currentStep == lastRaiserIndex) {
-            endBettingRound();
-        } else {
-            requestPlayerAction(activePlayers.get(currentStep));
-        }
-    }
-
-    private void broadcastPlayerAction(GameMessageType type, String data) {
-        GameServerMessage message = GameServerMessageUtils.createMessage(type, data.getBytes());
+    private void sendBroadcastToAll(GameServerMessage message) {
         for (Player p : room.getPlayers()) {
             socketServer.sendMessage(p.getSocket(), message);
         }
     }
 
-    public void handlePlayerDisconnect(Player player) {
-        if (player == null) return;
+    public void startGame() {
+        this.activePlayers = new ArrayList<>(room.getPlayers());
+        this.pot = 0;
+        this.currentBet = 0;
+        List<Card> deck = DeckGenerator.generateRandomDeck(5 + 2 * room.currentPlayersCount());
+        // Первые 5 карт - общие
+        this.communityCards = deck.subList(0, 5);
+        List<Card> playerCards = deck.subList(5, deck.size()); // Остальные - игрокам
 
-        activePlayers.remove(player);
-        player.setFolded(true);
+        currentDiller = (currentDiller + 1) % activePlayers.size(); // Определяем дилера
+        currentStep = currentDiller; // Первый ход - у дилера
 
-        GameServerMessage message = GameServerMessageUtils.createMessage(GameMessageType.PLAYER_DISCONNECTED, player.getUsername().getBytes());
-        sendBroadcastToActivePlayers(message);
+        int cardIndex = 0;
+        for (Player player : activePlayers) {
+            List<Card> hand = List.of(playerCards.get(cardIndex), playerCards.get(cardIndex + 1));
+            cardIndex += 2;
+            player.setHand(hand);
 
-        if (activePlayers.size() == 1) {
-            determineWinner(); // Если остался один — он победил
-        } else if (currentStep >= activePlayers.size()) {
-            currentStep = 0; // Чтобы не выйти за границы массива
+            String playerMessage = "%s;%s;%d".formatted(
+                    hand.get(0).toString(),
+                    hand.get(1).toString(),
+                    currentDiller
+            );
+
+            GameServerMessage message = GameServerMessageUtils.createMessage(GameMessageType.START_GAME, playerMessage.getBytes());
+            sendMessage(player, message);
+            processGame();
         }
     }
+
+    public void processGame() {
+        boolean gameProcessing = true;
+        while (true) {
+            if (activePlayers.get(currentStep).isAllInned() || activePlayers.get(currentStep).isFolded()) {
+                nextTurn();
+                continue;
+            }
+            sendMessage(activePlayers.get(currentStep), GameServerMessageUtils.createMessage(GameMessageType.WAITING_FOR_ACTION, new byte[0]));
+            handlePlayerAction();
+            if (activePlayers.stream().filter(r -> !r.isFolded()).toList().size() == 1) {
+                gameProcessing = false;
+                break;
+            }
+            if (lastRaiser == -1 && currentStep == currentDiller) {
+                break;
+            } else if (lastRaiser == currentStep) {
+                break;
+            }
+        }
+        if (!gameProcessing) {
+            endGame();
+        } else {
+            GameServerMessage flop = GameServerMessageUtils.createMessage(GameMessageType.COMMUNITY_CARDS, "%s;%s;%s".formatted(communityCards.get(0), communityCards.get(1), communityCards.get(2)).getBytes());
+            sendBroadcastToAll(flop);
+            currentStep = currentDiller;
+            lastRaiser = -1;
+            activePlayers.forEach(p -> p.setCurrentBet(0));
+            while (true) {
+                if (activePlayers.get(currentStep).isAllInned() || activePlayers.get(currentStep).isFolded()) {
+                    nextTurn();
+                    continue;
+                }
+                sendMessage(activePlayers.get(currentStep), GameServerMessageUtils.createMessage(GameMessageType.WAITING_FOR_ACTION, new byte[0]));
+                handlePlayerAction();
+                if (activePlayers.stream().filter(r -> !r.isFolded()).toList().size() == 1) {
+                    gameProcessing = false;
+                    break;
+                }
+                if (lastRaiser == -1 && currentStep == currentDiller) {
+                    break;
+                } else if (lastRaiser == currentStep) {
+                    break;
+                }
+            }
+            if (!gameProcessing) {
+                endGame();
+            } else {
+                GameServerMessage tern = GameServerMessageUtils.createMessage(GameMessageType.COMMUNITY_CARDS, "%s".formatted(communityCards.get(3)).getBytes());
+                sendBroadcastToAll(tern);
+                currentStep = currentDiller;
+                lastRaiser = -1;
+                activePlayers.forEach(p -> p.setCurrentBet(0));
+                while (true) {
+                    if (activePlayers.get(currentStep).isAllInned() || activePlayers.get(currentStep).isFolded()) {
+                        nextTurn();
+                        continue;
+                    }
+                    sendMessage(activePlayers.get(currentStep), GameServerMessageUtils.createMessage(GameMessageType.WAITING_FOR_ACTION, new byte[0]));
+                    handlePlayerAction();
+                    if (activePlayers.stream().filter(r -> !r.isFolded()).toList().size() == 1) {
+                        gameProcessing = false;
+                        break;
+                    }
+                    if (lastRaiser == -1 && currentStep == currentDiller) {
+                        break;
+                    } else if (lastRaiser == currentStep) {
+                        break;
+                    }
+                }
+                if (!gameProcessing) {
+                    endGame();
+                } else {
+                    GameServerMessage river = GameServerMessageUtils.createMessage(GameMessageType.COMMUNITY_CARDS, "%s".formatted(communityCards.get(4)).getBytes());
+                    sendBroadcastToAll(river);
+                    currentStep = currentDiller;
+                    lastRaiser = -1;
+                    activePlayers.forEach(p -> p.setCurrentBet(0));
+                    while (true) {
+                        if (activePlayers.get(currentStep).isAllInned() || activePlayers.get(currentStep).isFolded()) {
+                            nextTurn();
+                            continue;
+                        }
+                        sendMessage(activePlayers.get(currentStep), GameServerMessageUtils.createMessage(GameMessageType.WAITING_FOR_ACTION, new byte[0]));
+                        handlePlayerAction();
+                        if (activePlayers.stream().filter(r -> !r.isFolded()).toList().size() == 1) {
+                            break;
+                        }
+                        if (lastRaiser == -1 && currentStep == currentDiller) {
+                            break;
+                        } else if (lastRaiser == currentStep) {
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+        endGame();
+    }
+
+    public void handlePlayerAction() {
+        Player player = activePlayers.get(currentStep);
+        try {
+            GameServerMessage playerAction = socketServer.readMessage(player.getSocket());
+            GameMessageType actionType = playerAction.getType();
+            switch (actionType) {
+                case FOLD -> handleFold(player);
+                case CHECK -> handleCheck(player);
+                case CALL -> handleCall(player);
+                case RAISE -> handleRaise(player, Long.parseLong(new String(playerAction.getData())));
+                case ALL_IN -> handleAllIn(player);
+                default -> {
+                    activePlayers.remove(player);
+                    sendMessage(player, GameServerMessageUtils.createMessage(GameMessageType.ERROR, "WRONG ACTION! DISCONNECTED!".getBytes()));
+                    removePlayer(player);
+                }
+            }
+        } catch (MessageException | NumberFormatException e) {
+            activePlayers.remove(player);
+            removePlayer(player);
+        }
+
+    }
+
+    private void handleFold(Player player) {
+        player.setFolded(true);
+        sendBroadcast(GameServerMessageUtils.createMessage(GameMessageType.PLAYER_FOLDED, player.getUsername().getBytes()), player.getUsername());
+        nextTurn();
+    }
+
+    private void handleCheck(Player player) {
+        if (lastRaiser != -1 && lastRaiser != currentStep) {
+            sendMessage(player, GameServerMessageUtils.createMessage(GameMessageType.ERROR, "You can't check if someone made a bet!".getBytes()));
+            activePlayers.remove(player);
+            removePlayer(player);
+        } else {
+            sendBroadcast(GameServerMessageUtils.createMessage(GameMessageType.PLAYER_CHECKED, player.getUsername().getBytes()), player.getUsername());
+            nextTurn();
+        }
+    }
+
+    private void handleCall(Player player) {
+        long currentMoney = player.getMoney();
+        if (currentMoney < currentBet - player.getCurrentBet()) {
+            sendMessage(player, GameServerMessageUtils.createMessage(GameMessageType.ERROR, "You not have enough money!".getBytes()));
+            activePlayers.remove(player);
+            removePlayer(player);
+        } else {
+            long toSubtract = currentBet - player.getCurrentBet();
+            player.subtractMoney(toSubtract);
+            pot += toSubtract;
+            player.setCurrentBet(currentBet);
+            sendBroadcast(GameServerMessageUtils.createMessage(GameMessageType.PLAYER_CALLED, "%s;%d".formatted(player.getUsername(), toSubtract).getBytes()), player.getUsername());
+            nextTurn();
+        }
+    }
+
+    private void handleRaise(Player player, long amount) {
+        long currentMoney = player.getMoney();
+        if (currentMoney < amount - player.getCurrentBet() || amount < minBet) {
+            if (currentMoney < amount - player.getCurrentBet()) {
+                sendMessage(player, GameServerMessageUtils.createMessage(GameMessageType.ERROR, "You not have enough money!".getBytes()));
+            } else {
+                sendMessage(player, GameServerMessageUtils.createMessage(GameMessageType.ERROR, "Minimum bet is %s!".formatted(minBet).getBytes()));
+            }
+            activePlayers.remove(player);
+            removePlayer(player);
+        } else {
+            long toSubtract = amount - player.getCurrentBet();
+            player.subtractMoney(toSubtract);
+            currentBet = amount;
+            lastRaiser = currentStep;
+            pot += toSubtract;
+            player.setCurrentBet(amount);
+            sendBroadcast(GameServerMessageUtils.createMessage(GameMessageType.PLAYER_RAISED, "%s;%d;%d".formatted(player.getUsername(), amount, toSubtract).getBytes()), player.getUsername());
+            nextTurn();
+        }
+
+    }
+
+    private void handleAllIn(Player player) {
+        long bet = player.getDefaultMoney();
+        long currentMoney = player.getMoney();
+        player.subtractMoney(currentMoney);
+        if (currentBet >= bet) {
+            pot += bet - currentMoney;
+            sendBroadcast(GameServerMessageUtils.createMessage(GameMessageType.PLAYER_ALL_INNED, "%s;-1".formatted(player.getUsername()).getBytes()), player.getUsername());
+        } else {
+            currentBet = bet;
+            lastRaiser = currentStep;
+            pot += bet - currentMoney;
+            sendBroadcast(GameServerMessageUtils.createMessage(GameMessageType.PLAYER_ALL_INNED, "%s;%d".formatted(player.getUsername(), bet).getBytes()), player.getUsername());
+        }
+        player.setAllInned(true);
+        nextTurn();
+    }
+
+    private void nextTurn() {
+        do {
+            currentStep = (currentStep + 1) % activePlayers.size();
+        } while (!activePlayers.get(currentStep).isFolded());  // Пропускаем выбывших игроков
+    }
+
+    private void endGame() {
+        StringBuilder gameResult = new StringBuilder();
+
+        List<Player> notFoldedPlayers = activePlayers.stream().filter(r -> !r.isFolded()).toList();
+
+
+        List<Card> communityCards = this.communityCards;
+        Map<Player, HandWorth> handValues = new HashMap<>();
+
+        for (Player player : notFoldedPlayers) {
+            List<Card> playerHand = List.of(player.getHand().get(0), player.getHand().get(1));
+            List<Card> fullHand = new ArrayList<>(communityCards);
+            fullHand.addAll(playerHand);
+
+            handValues.put(player, HandEvaluator.calculateHandValue(fullHand, 7));
+        }
+
+        int maxHandValue = handValues.values().stream().mapToInt(HandWorth::value).max().orElse(0);
+        List<Player> winners = handValues.entrySet().stream()
+                .filter(entry -> entry.getValue().value() == maxHandValue)
+                .map(Map.Entry::getKey)
+                .toList();
+
+        long winnings = pot / winners.size();
+        List<Player> otherPlayers = new ArrayList<>(activePlayers);
+        otherPlayers.removeAll(winners);
+
+        winners.forEach(p -> p.addMoney(winnings));
+        activePlayers.forEach(p -> p.setDefaultMoney(p.getMoney()));
+        activePlayers.forEach(Player::reset);
+
+        //TODO добавить отправку обновления баланса игрока на сервер!
+
+        for (Player player: winners) {
+            gameResult.append(player.getUsername());
+            gameResult.append(";");
+            gameResult.append("1");
+            gameResult.append(";");
+            gameResult.append(player.getMoney());
+            gameResult.append(";");
+            gameResult.append(player.getHand().get(0).toString());
+            gameResult.append(";");
+            gameResult.append(player.getHand().get(1).toString());
+            gameResult.append("\n");
+        }
+        if (!otherPlayers.isEmpty()) {
+            for (Player player: otherPlayers) {
+                gameResult.append(player.getUsername());
+                gameResult.append(";");
+                gameResult.append("0");
+                gameResult.append(";");
+                gameResult.append(player.getMoney());
+                gameResult.append(";");
+                gameResult.append(player.getHand().get(0).toString());
+                gameResult.append(";");
+                gameResult.append(player.getHand().get(1).toString());
+                gameResult.append("\n");
+            }
+        }
+        gameResult.deleteCharAt(gameResult.length() - 1);
+        sendBroadcastToAll(GameServerMessageUtils.createMessage(GameMessageType.GAME_END, gameResult.toString().getBytes()));
+    }
+
 }
