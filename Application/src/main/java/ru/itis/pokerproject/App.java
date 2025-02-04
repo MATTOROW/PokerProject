@@ -29,6 +29,7 @@ public class App extends Application {
             client.registerListener(new PlayerReadyEventListener());
             client.registerListener(new PlayerConnectedEventListener());
             client.registerListener(new PlayerDisconnectedEventListener());
+            client.registerListener(new StartGameEventListener());
             client.connect();
         } catch (ClientException e) {
             handler.showConnectionErrorDialog(primaryStage);

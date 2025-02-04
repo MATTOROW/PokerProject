@@ -80,7 +80,6 @@ public class SocketServer extends AbstractSocketServer<GameMessageType, GameServ
                     sendMessage(connectionId, error);
                     sockets.remove(socket);
                 }
-                sockets.removeWithoutClosing(socket);
             } catch (EmptyMessageException | MessageReadingException e) {
                 System.out.println("Lost connect");
                 DisconnectFromRoomService.disconnectFromRoom(socket);

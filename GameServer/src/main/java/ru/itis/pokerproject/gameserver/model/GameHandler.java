@@ -122,16 +122,16 @@ public class GameHandler {
             cardIndex += 2;
             player.setHand(hand);
 
-            String playerMessage = "%s;%s;%d".formatted(
+            String playerMessage = "%s;%s".formatted(
                     hand.get(0).toString(),
-                    hand.get(1).toString(),
-                    currentDiller
+                    hand.get(1).toString()
             );
 
             GameServerMessage message = GameServerMessageUtils.createMessage(GameMessageType.START_GAME, playerMessage.getBytes());
             sendMessage(player, message);
-            processGame();
+            System.out.println("Отправил сообщение игроку: " + player.getUsername());
         }
+        processGame();
     }
 
     public void processGame() {

@@ -11,6 +11,7 @@ import javafx.scene.paint.Color;
 import javafx.scene.shape.Ellipse;
 import ru.itis.pokerproject.model.PlayerInfo;
 import ru.itis.pokerproject.service.SendReadyStatusService;
+import ru.itis.pokerproject.shared.model.Card;
 import ru.itis.pokerproject.shared.template.client.ClientException;
 
 import java.util.List;
@@ -83,27 +84,44 @@ public class GameScreen extends BorderPane {
         leftPlayers.getChildren().clear();
         rightPlayers.getChildren().clear();
 
-        if (myPlayer != null)  {
+        if (myPlayer != null) {
             VBox myPlayerBox = new VBox(10);
             myPlayerBox.setAlignment(Pos.CENTER);
             myPlayerBox.getChildren().add(createPlayerLabel(myPlayer));
+
+            HBox myCardsBox = new HBox(10);
+            if (myPlayer.getHand() != null) {
+                for (Card card : myPlayer.getHand()) {
+                    myCardsBox.getChildren().add(createCardLabel(card));
+                }
+            } else {
+                myCardsBox.getChildren().addAll(createHiddenCardLabel(), createHiddenCardLabel());
+            }
+            myPlayerBox.getChildren().add(myCardsBox);
+
             myPlayerBox.getChildren().add(readyButton);
             if (myPlayer.isReady()) {
                 readyButton.setDisable(true);
             }
-
             bottomPlayers.getChildren().add(myPlayerBox);
         }
 
         for (int i = 0; i < players.size(); i++) {
             PlayerInfo player = players.get(i);
-            Label playerLabel = createPlayerLabel(player);
+            VBox playerBox = new VBox(10);
+            playerBox.setAlignment(Pos.CENTER);
+            playerBox.getChildren().add(createPlayerLabel(player));
+
+            HBox hiddenCardsBox = new HBox(10);
+            hiddenCardsBox.getChildren().addAll(createHiddenCardLabel(), createHiddenCardLabel());
+            playerBox.getChildren().add(hiddenCardsBox);
+
             if (i % 2 == 0) {
-                topPlayers.getChildren().add(playerLabel);
+                topPlayers.getChildren().add(playerBox);
             } else if (i % 3 == 0) {
-                leftPlayers.getChildren().add(playerLabel);
+                leftPlayers.getChildren().add(playerBox);
             } else {
-                rightPlayers.getChildren().add(playerLabel);
+                rightPlayers.getChildren().add(playerBox);
             }
         }
     }
@@ -166,5 +184,18 @@ public class GameScreen extends BorderPane {
         } catch (ClientException e) {
             manager.showErrorScreen(e.getMessage());
         }
+    }
+
+    private Label createCardLabel(Card card) {
+        String cardText = card.suit() + " " + card.value();
+        Label cardLabel = new Label(cardText);
+        cardLabel.setStyle("-fx-border-color: white; -fx-padding: 5; -fx-background-color: darkred; -fx-text-fill: white;");
+        return cardLabel;
+    }
+
+    private Label createHiddenCardLabel() {
+        Label cardLabel = new Label("🂠");
+        cardLabel.setStyle("-fx-border-color: white; -fx-padding: 5; -fx-background-color: black; -fx-text-fill: white;");
+        return cardLabel;
     }
 }
