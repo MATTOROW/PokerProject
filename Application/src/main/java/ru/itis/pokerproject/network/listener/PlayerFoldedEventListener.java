@@ -15,7 +15,7 @@ public class PlayerFoldedEventListener implements GameEventListener {
         if (player != null) {
             Platform.runLater(() -> {
                 Game.getGameScreen().updateUI();
-                Game.getGameScreen().showPlayerAction(username + " сбросил карты (FOLD)");
+                Game.getGameScreen().showNotification(username + " сбросил карты (FOLD)");
             });
         }
     }

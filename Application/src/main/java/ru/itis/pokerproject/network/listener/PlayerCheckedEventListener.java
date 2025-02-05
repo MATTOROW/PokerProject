@@ -10,7 +10,7 @@ public class PlayerCheckedEventListener implements GameEventListener {
     public void handle(GameServerMessage message) {
         String username = new String(message.getData());
         Platform.runLater(() -> {
-            Game.getGameScreen().showPlayerAction(username + " сделал CHECK");
+            Game.getGameScreen().showNotification(username + " сделал CHECK");
         });
     }
 

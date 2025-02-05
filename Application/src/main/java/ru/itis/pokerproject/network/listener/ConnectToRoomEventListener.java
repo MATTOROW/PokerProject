@@ -41,6 +41,7 @@ public class ConnectToRoomEventListener implements GameEventListener {
         Platform.runLater(() -> {
             screen.updateUI();
             Game.getManager().getPrimaryStage().getScene().setRoot(screen);
+            Game.getManager().getPrimaryStage().sizeToScene();
         });
     }
 

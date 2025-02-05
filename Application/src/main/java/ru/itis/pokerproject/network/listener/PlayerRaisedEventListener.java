@@ -23,7 +23,7 @@ public class PlayerRaisedEventListener implements GameEventListener {
             Platform.runLater(() -> {
                 Game.getGameScreen().updatePotAndBet();
                 Game.getGameScreen().updateUI();
-                Game.getGameScreen().showPlayerAction(username + " повысил ставку до " + bet + " (RAISE)");
+                Game.getGameScreen().showNotification(username + " повысил ставку до " + bet + " (RAISE)");
             });
         }
     }

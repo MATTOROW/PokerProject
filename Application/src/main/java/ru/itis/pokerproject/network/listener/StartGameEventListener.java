@@ -35,8 +35,8 @@ public class StartGameEventListener implements GameEventListener {
 
         // Обновляем UI в JavaFX потоке
         Platform.runLater(() -> {
-            Game.getGameScreen().initializeActionButtons(); // Создать кнопки действий (но они будут неактивны)
             Game.getGameScreen().updateUI();
+            Game.getGameScreen().startGame();
         });
     }
 

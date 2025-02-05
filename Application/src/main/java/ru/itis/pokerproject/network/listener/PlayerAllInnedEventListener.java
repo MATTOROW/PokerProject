@@ -26,7 +26,7 @@ public class PlayerAllInnedEventListener implements GameEventListener {
             Platform.runLater(() -> {
                 Game.getGameScreen().updatePotAndBet();
                 Game.getGameScreen().updateUI();
-                Game.getGameScreen().showPlayerAction(username + " пошел ALL IN (" + moneyLeft + ")");
+                Game.getGameScreen().showNotification(username + " пошел ALL IN (" + moneyLeft + ")");
             });
         }
     }

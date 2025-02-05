@@ -164,22 +164,27 @@ public class RoomsScreen {
         dialogStage.initModality(Modality.APPLICATION_MODAL);
         dialogStage.setTitle("Создание комнаты");
 
+        // Создаем подпись и выпадающий список для максимального количества игроков (от 2 до 4)
         Label maxPlayersLabel = new Label("Макс. игроков:");
-        TextField maxPlayersField = new TextField();
-        maxPlayersField.setPromptText("Например, 6");
+        ComboBox<Integer> maxPlayersComboBox = new ComboBox<>();
+        maxPlayersComboBox.getItems().addAll(2, 3, 4);
+        maxPlayersComboBox.setValue(2); // значение по умолчанию
 
+        // Подпись и текстовое поле для минимальной ставки
         Label minBetLabel = new Label("Мин. ставка:");
         TextField minBetField = new TextField();
         minBetField.setPromptText("Например, 100");
 
+        // Кнопка создания комнаты
         Button createButton = new Button("Создать");
         createButton.setStyle("-fx-background-color: #4CAF50; -fx-text-fill: white; -fx-font-weight: bold;");
         createButton.setOnAction(event -> {
             try {
-                int maxPlayers = Integer.parseInt(maxPlayersField.getText());
+                // Получаем выбранное значение из ComboBox для максимального количества игроков
+                int maxPlayers = maxPlayersComboBox.getValue();
                 long minBet = Long.parseLong(minBetField.getText());
 
-                if (maxPlayers <= 0 || minBet < 0) {
+                if (maxPlayers < 2 || maxPlayers > 4 || minBet < 0) {
                     manager.showErrorScreen("Введите корректные данные");
                     return;
                 }
@@ -194,7 +199,8 @@ public class RoomsScreen {
             }
         });
 
-        VBox dialogLayout = new VBox(10, maxPlayersLabel, maxPlayersField, minBetLabel, minBetField, createButton);
+        // Располагаем элементы диалогового окна в вертикальном контейнере
+        VBox dialogLayout = new VBox(10, maxPlayersLabel, maxPlayersComboBox, minBetLabel, minBetField, createButton);
         dialogLayout.setAlignment(Pos.CENTER);
         dialogLayout.setPrefSize(300, 200);
 
@@ -202,6 +208,7 @@ public class RoomsScreen {
         dialogStage.setScene(dialogScene);
         dialogStage.showAndWait();
     }
+
 
     public static class TableRow {
         private final SimpleStringProperty id;

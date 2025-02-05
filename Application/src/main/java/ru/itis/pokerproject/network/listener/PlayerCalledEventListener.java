@@ -21,7 +21,7 @@ public class PlayerCalledEventListener implements GameEventListener {
             Platform.runLater(() -> {
                 Game.getGameScreen().updatePotAndBet();
                 Game.getGameScreen().updateUI();
-                Game.getGameScreen().showPlayerAction(username + " сделал CALL (+" + toSubtract + " в банк)");
+                Game.getGameScreen().showNotification(username + " сделал CALL (+" + toSubtract + " в банк)");
             });
         }
     }
