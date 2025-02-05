@@ -9,8 +9,9 @@ public class PlayerInfo {
     private String username;
     private long money;
     private boolean isReady;
-    private long currentBet;
     private List<Card> hand;
+    private boolean isFolded;
+    private long currentBet;
 
     public PlayerInfo(String username, long money, boolean isReady) {
         this.username = username;
@@ -35,19 +36,31 @@ public class PlayerInfo {
         isReady = ready;
     }
 
-    public long getCurrentBet() {
-        return currentBet;
-    }
-
-    public void setCurrentBet(long currentBet) {
-        this.currentBet = currentBet;
-    }
-
     public List<Card> getHand() {
         return hand;
     }
 
     public void setHand(List<Card> hand) {
         this.hand = hand;
+    }
+
+    public void subtractMoney(long money) {
+        this.money -= money;
+    }
+
+    public boolean isFolded() {
+        return isFolded;
+    }
+
+    public void setFolded(boolean folded) {
+        isFolded = folded;
+    }
+
+    public long getCurrentBet() {
+        return currentBet;
+    }
+
+    public void setCurrentBet(long currentBet) {
+        this.currentBet = currentBet;
     }
 }

@@ -30,8 +30,14 @@ public class StartGameEventListener implements GameEventListener {
         PlayerInfo myPlayer = Game.getMyPlayer();
         myPlayer.setHand(cards);
 
+        Game.setPot(0);
+        Game.setCurrentBet(Game.getMinBet());
+
         // Обновляем UI в JavaFX потоке
-        Platform.runLater(() -> Game.getGameScreen().updateUI());
+        Platform.runLater(() -> {
+            Game.getGameScreen().initializeActionButtons(); // Создать кнопки действий (но они будут неактивны)
+            Game.getGameScreen().updateUI();
+        });
     }
 
     @Override

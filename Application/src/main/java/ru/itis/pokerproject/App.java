@@ -30,6 +30,12 @@ public class App extends Application {
             client.registerListener(new PlayerConnectedEventListener());
             client.registerListener(new PlayerDisconnectedEventListener());
             client.registerListener(new StartGameEventListener());
+            client.registerListener(new WaitForActionEventListener());
+            client.registerListener(new PlayerFoldedEventListener());
+            client.registerListener(new PlayerCheckedEventListener());
+            client.registerListener(new PlayerCalledEventListener());
+            client.registerListener(new PlayerRaisedEventListener());
+            client.registerListener(new PlayerAllInnedEventListener());
             client.connect();
         } catch (ClientException e) {
             handler.showConnectionErrorDialog(primaryStage);

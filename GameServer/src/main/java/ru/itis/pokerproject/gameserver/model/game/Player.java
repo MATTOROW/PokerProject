@@ -65,7 +65,7 @@ public class Player {
     }
 
     public List<Card> getHand() {
-        return hand;
+        return this.hand;
     }
 
     public void setHand(List<Card> hand) {

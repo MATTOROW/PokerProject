@@ -15,6 +15,8 @@ public class Game {
     private static long minBet;
     private static GameScreen gameScreen = null;
     private static ScreenManager manager = null;
+    private static long pot;
+    private static long currentBet;
 
     public static List<PlayerInfo> getPlayers() {
         return players;
@@ -68,10 +70,35 @@ public class Game {
         Game.manager = manager;
     }
 
+    public static long getPot() {
+        return pot;
+    }
+
+    public static void setPot(long pot) {
+        Game.pot = pot;
+    }
+
+    public static long getCurrentBet() {
+        return currentBet;
+    }
+
+    public static void setCurrentBet(long currentBet) {
+        Game.currentBet = currentBet;
+    }
+
     private static void notifyUpdate() {
         if (gameScreen != null) {
             Platform.runLater(gameScreen::updateUI); // Обновляем UI в JavaFX-потоке
         }
+    }
+
+    public static PlayerInfo getPlayerByUsername(String username) {
+        for (PlayerInfo playerInfo: players) {
+            if (playerInfo.getUsername().equals(username)) {
+                return playerInfo;
+            }
+        }
+        return null;
     }
 
     public static void updatePlayerStatus(String username, boolean status) {

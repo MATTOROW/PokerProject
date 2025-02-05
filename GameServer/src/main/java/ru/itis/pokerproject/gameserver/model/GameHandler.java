@@ -127,6 +127,7 @@ public class GameHandler {
                     hand.get(1).toString()
             );
 
+            System.out.println(player.getHand().size());
             GameServerMessage message = GameServerMessageUtils.createMessage(GameMessageType.START_GAME, playerMessage.getBytes());
             sendMessage(player, message);
             System.out.println("Отправил сообщение игроку: " + player.getUsername());
@@ -141,6 +142,11 @@ public class GameHandler {
                 nextTurn();
                 continue;
             }
+            if (activePlayers.stream().filter(r -> !r.isFolded()).toList().size() == 1) {
+                System.out.println("Остался один не сфолдифший!");
+                gameProcessing = false;
+                break;
+            }
             sendMessage(activePlayers.get(currentStep), GameServerMessageUtils.createMessage(GameMessageType.WAITING_FOR_ACTION, new byte[0]));
             handlePlayerAction();
             if (activePlayers.stream().filter(r -> !r.isFolded()).toList().size() == 1) {
@@ -153,6 +159,7 @@ public class GameHandler {
                 break;
             }
         }
+        System.out.println(gameProcessing);
         if (!gameProcessing) {
             endGame();
         } else {
@@ -165,6 +172,10 @@ public class GameHandler {
                 if (activePlayers.get(currentStep).isAllInned() || activePlayers.get(currentStep).isFolded()) {
                     nextTurn();
                     continue;
+                }
+                if (activePlayers.stream().filter(r -> !r.isFolded()).toList().size() == 1) {
+                    gameProcessing = false;
+                    break;
                 }
                 sendMessage(activePlayers.get(currentStep), GameServerMessageUtils.createMessage(GameMessageType.WAITING_FOR_ACTION, new byte[0]));
                 handlePlayerAction();
@@ -191,6 +202,10 @@ public class GameHandler {
                         nextTurn();
                         continue;
                     }
+                    if (activePlayers.stream().filter(r -> !r.isFolded()).toList().size() == 1) {
+                        gameProcessing = false;
+                        break;
+                    }
                     sendMessage(activePlayers.get(currentStep), GameServerMessageUtils.createMessage(GameMessageType.WAITING_FOR_ACTION, new byte[0]));
                     handlePlayerAction();
                     if (activePlayers.stream().filter(r -> !r.isFolded()).toList().size() == 1) {
@@ -216,6 +231,9 @@ public class GameHandler {
                             nextTurn();
                             continue;
                         }
+                        if (activePlayers.stream().filter(r -> !r.isFolded()).toList().size() == 1) {
+                            break;
+                        }
                         sendMessage(activePlayers.get(currentStep), GameServerMessageUtils.createMessage(GameMessageType.WAITING_FOR_ACTION, new byte[0]));
                         handlePlayerAction();
                         if (activePlayers.stream().filter(r -> !r.isFolded()).toList().size() == 1) {
@@ -227,10 +245,10 @@ public class GameHandler {
                             break;
                         }
                     }
+                    endGame();
                 }
             }
         }
-        endGame();
     }
 
     public void handlePlayerAction() {
@@ -339,53 +357,17 @@ public class GameHandler {
     private void endGame() {
         StringBuilder gameResult = new StringBuilder();
 
-        List<Player> notFoldedPlayers = activePlayers.stream().filter(r -> !r.isFolded()).toList();
-
-
-        List<Card> communityCards = this.communityCards;
-        Map<Player, HandWorth> handValues = new HashMap<>();
-
-        for (Player player : notFoldedPlayers) {
-            List<Card> playerHand = List.of(player.getHand().get(0), player.getHand().get(1));
-            List<Card> fullHand = new ArrayList<>(communityCards);
-            fullHand.addAll(playerHand);
-
-            handValues.put(player, HandEvaluator.calculateHandValue(fullHand, 7));
-        }
-
-        int maxHandValue = handValues.values().stream().mapToInt(HandWorth::value).max().orElse(0);
-        List<Player> winners = handValues.entrySet().stream()
-                .filter(entry -> entry.getValue().value() == maxHandValue)
-                .map(Map.Entry::getKey)
-                .toList();
-
-        long winnings = pot / winners.size();
-        List<Player> otherPlayers = new ArrayList<>(activePlayers);
-        otherPlayers.removeAll(winners);
-
-        winners.forEach(p -> p.addMoney(winnings));
-        activePlayers.forEach(p -> p.setDefaultMoney(p.getMoney()));
-        activePlayers.forEach(Player::reset);
-
-        //TODO добавить отправку обновления баланса игрока на сервер!
-
-        for (Player player: winners) {
-            gameResult.append(player.getUsername());
-            gameResult.append(";");
-            gameResult.append("1");
-            gameResult.append(";");
-            gameResult.append(player.getMoney());
-            gameResult.append(";");
-            gameResult.append(player.getHand().get(0).toString());
-            gameResult.append(";");
-            gameResult.append(player.getHand().get(1).toString());
-            gameResult.append("\n");
-        }
-        if (!otherPlayers.isEmpty()) {
-            for (Player player: otherPlayers) {
+        System.out.println("game ended");
+        if (activePlayers.size() == 1) {
+            System.out.println("Остался 1");
+            List<Player> winners = new ArrayList<>(activePlayers);
+            long winnings = pot;
+            winners.forEach(p -> p.addMoney(winnings));
+            activePlayers.forEach(p -> p.setDefaultMoney(p.getMoney()));
+            for (Player player: winners) {
                 gameResult.append(player.getUsername());
                 gameResult.append(";");
-                gameResult.append("0");
+                gameResult.append("1");
                 gameResult.append(";");
                 gameResult.append(player.getMoney());
                 gameResult.append(";");
@@ -394,9 +376,69 @@ public class GameHandler {
                 gameResult.append(player.getHand().get(1).toString());
                 gameResult.append("\n");
             }
+            gameResult.deleteCharAt(gameResult.length() - 1);
+            sendBroadcastToAll(GameServerMessageUtils.createMessage(GameMessageType.GAME_END, gameResult.toString().getBytes()));
+
+            activePlayers.forEach(Player::reset);
+        } else {
+            List<Player> notFoldedPlayers = activePlayers.stream().filter(r -> !r.isFolded()).toList();
+
+            List<Card> communityCards = this.communityCards;
+            Map<Player, HandWorth> handValues = new HashMap<>();
+
+            for (Player player : notFoldedPlayers) {
+                List<Card> playerHand = List.of(player.getHand().get(0), player.getHand().get(1));
+                List<Card> fullHand = new ArrayList<>(communityCards);
+                fullHand.addAll(playerHand);
+
+                handValues.put(player, HandEvaluator.calculateHandValue(fullHand, 7));
+            }
+
+            int maxHandValue = handValues.values().stream().mapToInt(HandWorth::value).max().orElse(0);
+            List<Player> winners = handValues.entrySet().stream()
+                    .filter(entry -> entry.getValue().value() == maxHandValue)
+                    .map(Map.Entry::getKey)
+                    .toList();
+
+            long winnings = pot / winners.size();
+            List<Player> otherPlayers = new ArrayList<>(activePlayers);
+            otherPlayers.removeAll(winners);
+
+            winners.forEach(p -> p.addMoney(winnings));
+            activePlayers.forEach(p -> p.setDefaultMoney(p.getMoney()));
+            activePlayers.forEach(Player::reset);
+
+            //TODO добавить отправку обновления баланса игрока на сервер!
+
+            for (Player player: winners) {
+                gameResult.append(player.getUsername());
+                gameResult.append(";");
+                gameResult.append("1");
+                gameResult.append(";");
+                gameResult.append(player.getMoney());
+                gameResult.append(";");
+                gameResult.append(player.getHand().get(0).toString());
+                gameResult.append(";");
+                gameResult.append(player.getHand().get(1).toString());
+                gameResult.append("\n");
+            }
+            if (!otherPlayers.isEmpty()) {
+                for (Player player: otherPlayers) {
+                    gameResult.append(player.getUsername());
+                    gameResult.append(";");
+                    gameResult.append("0");
+                    gameResult.append(";");
+                    gameResult.append(player.getMoney());
+                    gameResult.append(";");
+                    gameResult.append(player.getHand().get(0).toString());
+                    gameResult.append(";");
+                    gameResult.append(player.getHand().get(1).toString());
+                    gameResult.append("\n");
+                }
+            }
+            gameResult.deleteCharAt(gameResult.length() - 1);
+            sendBroadcastToAll(GameServerMessageUtils.createMessage(GameMessageType.GAME_END, gameResult.toString().getBytes()));
         }
-        gameResult.deleteCharAt(gameResult.length() - 1);
-        sendBroadcastToAll(GameServerMessageUtils.createMessage(GameMessageType.GAME_END, gameResult.toString().getBytes()));
     }
 
 }
