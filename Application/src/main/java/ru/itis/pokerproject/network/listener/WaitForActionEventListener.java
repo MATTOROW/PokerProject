@@ -29,10 +29,12 @@ public class WaitForActionEventListener implements GameEventListener {
             gameScreen.getAllInButton().setDisable(false);
 
             // CHECK доступен, если игрок уже поставил достаточно
+            System.out.println("Ставка игрока: " + playerBet);
+            System.out.println("Ставка в игре: " + currentBet);
             gameScreen.getCheckButton().setDisable(currentBet != playerBet);
 
             // CALL доступен, если у игрока хватает денег на уравнивание
-            gameScreen.getCallButton().setDisable(playerMoney <= toCall);
+            gameScreen.getCallButton().setDisable(playerMoney <= toCall || currentBet == 0);
 
             // Устанавливаем ограничения на ввод Raise
             TextField raiseInput = gameScreen.getRaiseAmountField();

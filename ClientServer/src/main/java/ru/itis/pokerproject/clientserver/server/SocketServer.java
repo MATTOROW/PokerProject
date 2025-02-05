@@ -59,6 +59,7 @@ public class SocketServer extends AbstractSocketServer<ClientMessageType, Client
                         int connectionId = gameServersToListen.lastIndexOf(socket);
                         sendMessageToGameServer(connectionId, ClientServerMessageUtils.createMessage(ClientMessageType.REGISTER_GAME_SERVER_RESPONSE, new byte[0]));
                         handleServerConnection(socket);
+                        break;
                     } else {
                         for (ServerEventListener<ClientMessageType, ClientServerMessage> listener : listeners) {
                             if (message.getType() == listener.getType()) {
@@ -93,12 +94,6 @@ public class SocketServer extends AbstractSocketServer<ClientMessageType, Client
                 sendMessage(socket, errorMessage);
             } catch (IOException | ServerEventListenerException e) {
                 System.err.println("Error handling connection: " + e.getMessage());
-            } finally {
-                try {
-                    socket.close();
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
             }
         }).start();
     }
@@ -112,7 +107,7 @@ public class SocketServer extends AbstractSocketServer<ClientMessageType, Client
                     ClientServerMessage message = ClientServerMessageUtils.readMessage(inputStream);
                     for (ServerEventListener<ClientMessageType, ClientServerMessage> listener : gameServerListeners) {
                         if (message.getType() == listener.getType()) {
-                            System.out.println("Нашелся нужный!" + message.getType());
+                            System.out.println("Нашелся нужный у сервера! " + message.getType() + "Его данные: " + new String(message.getData()));
                             handled = true;
                             ClientServerMessage answer = listener.handle(socket, message);
                             sendMessageToGameServer(connectionId, answer);

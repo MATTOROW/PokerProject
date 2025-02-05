@@ -23,6 +23,7 @@ public class ScreenManager {
     private final CreateRoomService createRoomService;
     private final ConnectToRoomService connectToRoomService;
     private final SendReadyStatusService sendReadyStatusService;
+    private final SendMessageToGameServerService sendMessageToGameServerService;
 
     public ScreenManager(Stage primaryStage, ConnectionErrorHandler errorHandler, SocketClient client) {
         this.authService = new AuthService(client);
@@ -30,6 +31,7 @@ public class ScreenManager {
         this.createRoomService = new CreateRoomService(client);
         this.connectToRoomService = new ConnectToRoomService(client);
         this.sendReadyStatusService = new SendReadyStatusService(client);
+        this.sendMessageToGameServerService = new SendMessageToGameServerService(client);
 
         this.primaryStage = primaryStage;
 
@@ -80,5 +82,9 @@ public class ScreenManager {
 
     public SendReadyStatusService getSendReadyStatusService() {
         return this.sendReadyStatusService;
+    }
+
+    public SendMessageToGameServerService getSendMessageToGameServerService() {
+        return sendMessageToGameServerService;
     }
 }

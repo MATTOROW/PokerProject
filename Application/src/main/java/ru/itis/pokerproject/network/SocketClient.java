@@ -95,7 +95,7 @@ public class SocketClient implements Client<ClientMessageType, ClientServerMessa
                         }
                     }
                     System.out.println("Прослушал сообщение: " + message.getType() + " " + new String(message.getData()));
-                    if (message.getType() == GameMessageType.ERROR) {
+                    if (message.getType() == GameMessageType.ERROR || message.getType() == GameMessageType.GAME_END) {
                         closeGameServer();
                     }
                 }

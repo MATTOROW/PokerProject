@@ -1,7 +1,9 @@
 package ru.itis.pokerproject.gameserver.model;
 
 import ru.itis.pokerproject.gameserver.model.game.Player;
+import ru.itis.pokerproject.gameserver.server.RoomManager;
 
+import java.io.IOException;
 import java.net.Socket;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -10,10 +12,12 @@ public class Room {
     private final int maxPlayers;
     private final List<Player> players = new CopyOnWriteArrayList<>();
     private final long minBet;
+    private final RoomManager manager;
 
-    public Room(int maxPlayers, long minBet) {
+    public Room(int maxPlayers, long minBet, RoomManager manager) {
         this.maxPlayers = maxPlayers;
         this.minBet = minBet;
+        this.manager = manager;
     }
 
     public boolean addPlayer(Player player) {
@@ -25,6 +29,11 @@ public class Room {
     }
 
     public void removePlayer(Player player) {
+        try {
+            player.getSocket().close();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
         players.remove(player);
     }
 
@@ -77,5 +86,9 @@ public class Room {
             answer.append("\n");
         }
         return answer.toString();
+    }
+
+    public RoomManager getManager() {
+        return manager;
     }
 }

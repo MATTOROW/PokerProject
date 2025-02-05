@@ -36,6 +36,8 @@ public class App extends Application {
             client.registerListener(new PlayerCalledEventListener());
             client.registerListener(new PlayerRaisedEventListener());
             client.registerListener(new PlayerAllInnedEventListener());
+            client.registerListener(new CommunityCardsEventListener());
+            client.registerListener(new GameEndEventListener());
             client.connect();
         } catch (ClientException e) {
             handler.showConnectionErrorDialog(primaryStage);

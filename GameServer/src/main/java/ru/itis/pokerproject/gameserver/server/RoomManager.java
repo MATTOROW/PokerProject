@@ -18,7 +18,7 @@ public class RoomManager {
     }
 
     public UUID createRoom(int maxPlayers, long minBet) {
-        Room newRoom = new Room(maxPlayers, minBet);
+        Room newRoom = new Room(maxPlayers, minBet, this);
         UUID roomId = UUID.randomUUID();
         rooms.put(roomId, newRoom);
         gameHandlers.put(roomId, new GameHandler(newRoom, socketServer));
@@ -27,6 +27,17 @@ public class RoomManager {
 
     public Room getRoom(UUID roomId) {
         return rooms.get(roomId);
+    }
+
+    public void removeRoom(Room room) {
+        for(Map.Entry<UUID, Room> entry : rooms.entrySet()){
+            if (room.equals(entry.getValue())){
+               UUID roomId = entry.getKey();
+               rooms.remove(roomId);
+               gameHandlers.remove(roomId);
+               break;
+            }
+        }
     }
 
     public UUID getRoomIdBySocket(Socket socket) {

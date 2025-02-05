@@ -3,6 +3,7 @@ package ru.itis.pokerproject.model;
 import javafx.application.Platform;
 import ru.itis.pokerproject.application.GameScreen;
 import ru.itis.pokerproject.application.ScreenManager;
+import ru.itis.pokerproject.shared.model.Card;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -17,6 +18,7 @@ public class Game {
     private static ScreenManager manager = null;
     private static long pot;
     private static long currentBet;
+    private static List<Card> communityCards = new ArrayList<>();
 
     public static List<PlayerInfo> getPlayers() {
         return players;
@@ -123,5 +125,13 @@ public class Game {
 
     public static GameScreen getGameScreen() {
         return gameScreen;
+    }
+
+    public static List<Card> getCommunityCards() {
+        return communityCards;
+    }
+
+    public static void setCommunityCards(List<Card> communityCards) {
+        Game.communityCards = communityCards;
     }
 }

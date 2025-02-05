@@ -7,6 +7,9 @@ import ru.itis.pokerproject.gameserver.model.game.Player;
 import ru.itis.pokerproject.gameserver.server.SocketServer;
 import ru.itis.pokerproject.gameserver.service.game.DeckGenerator;
 import ru.itis.pokerproject.gameserver.service.game.HandEvaluator;
+import ru.itis.pokerproject.shared.protocol.clientserver.ClientMessageType;
+import ru.itis.pokerproject.shared.protocol.clientserver.ClientServerMessage;
+import ru.itis.pokerproject.shared.protocol.clientserver.ClientServerMessageUtils;
 import ru.itis.pokerproject.shared.protocol.exception.MessageException;
 import ru.itis.pokerproject.shared.protocol.gameserver.GameMessageType;
 import ru.itis.pokerproject.shared.protocol.gameserver.GameServerMessage;
@@ -107,7 +110,7 @@ public class GameHandler {
     public void startGame() {
         this.activePlayers = new ArrayList<>(room.getPlayers());
         this.pot = 0;
-        this.currentBet = 0;
+        this.currentBet = minBet;
         List<Card> deck = DeckGenerator.generateRandomDeck(5 + 2 * room.currentPlayersCount());
         // Первые 5 карт - общие
         this.communityCards = deck.subList(0, 5);
@@ -127,10 +130,8 @@ public class GameHandler {
                     hand.get(1).toString()
             );
 
-            System.out.println(player.getHand().size());
             GameServerMessage message = GameServerMessageUtils.createMessage(GameMessageType.START_GAME, playerMessage.getBytes());
             sendMessage(player, message);
-            System.out.println("Отправил сообщение игроку: " + player.getUsername());
         }
         processGame();
     }
@@ -140,6 +141,9 @@ public class GameHandler {
         while (true) {
             if (activePlayers.get(currentStep).isAllInned() || activePlayers.get(currentStep).isFolded()) {
                 nextTurn();
+                if (lastRaiser == -1 && currentStep == currentDiller) {
+                    break;
+                }
                 continue;
             }
             if (activePlayers.stream().filter(r -> !r.isFolded()).toList().size() == 1) {
@@ -147,7 +151,9 @@ public class GameHandler {
                 gameProcessing = false;
                 break;
             }
+            System.out.println("Начался новый цикл!");
             sendMessage(activePlayers.get(currentStep), GameServerMessageUtils.createMessage(GameMessageType.WAITING_FOR_ACTION, new byte[0]));
+            System.out.println("Отправил сообщение игроку: " + activePlayers.get(currentStep).getUsername());
             handlePlayerAction();
             if (activePlayers.stream().filter(r -> !r.isFolded()).toList().size() == 1) {
                 gameProcessing = false;
@@ -159,7 +165,6 @@ public class GameHandler {
                 break;
             }
         }
-        System.out.println(gameProcessing);
         if (!gameProcessing) {
             endGame();
         } else {
@@ -171,6 +176,9 @@ public class GameHandler {
             while (true) {
                 if (activePlayers.get(currentStep).isAllInned() || activePlayers.get(currentStep).isFolded()) {
                     nextTurn();
+                    if (lastRaiser == -1 && currentStep == currentDiller) {
+                        break;
+                    }
                     continue;
                 }
                 if (activePlayers.stream().filter(r -> !r.isFolded()).toList().size() == 1) {
@@ -200,6 +208,9 @@ public class GameHandler {
                 while (true) {
                     if (activePlayers.get(currentStep).isAllInned() || activePlayers.get(currentStep).isFolded()) {
                         nextTurn();
+                        if (lastRaiser == -1 && currentStep == currentDiller) {
+                            break;
+                        }
                         continue;
                     }
                     if (activePlayers.stream().filter(r -> !r.isFolded()).toList().size() == 1) {
@@ -229,6 +240,9 @@ public class GameHandler {
                     while (true) {
                         if (activePlayers.get(currentStep).isAllInned() || activePlayers.get(currentStep).isFolded()) {
                             nextTurn();
+                            if (lastRaiser == -1 && currentStep == currentDiller) {
+                                break;
+                            }
                             continue;
                         }
                         if (activePlayers.stream().filter(r -> !r.isFolded()).toList().size() == 1) {
@@ -255,6 +269,7 @@ public class GameHandler {
         Player player = activePlayers.get(currentStep);
         try {
             GameServerMessage playerAction = socketServer.readMessage(player.getSocket());
+            System.out.println("Прочитал сообщение с типом: " + playerAction.getType());
             GameMessageType actionType = playerAction.getType();
             switch (actionType) {
                 case FOLD -> handleFold(player);
@@ -263,11 +278,12 @@ public class GameHandler {
                 case RAISE -> handleRaise(player, Long.parseLong(new String(playerAction.getData())));
                 case ALL_IN -> handleAllIn(player);
                 default -> {
-                    activePlayers.remove(player);
+                    player.setFolded(true);
                     sendMessage(player, GameServerMessageUtils.createMessage(GameMessageType.ERROR, "WRONG ACTION! DISCONNECTED!".getBytes()));
-                    removePlayer(player);
+                    broadcastPlayerDisconnected(player.getUsername());
                 }
             }
+            System.out.println("Метод handle отработал!");
         } catch (MessageException | NumberFormatException e) {
             activePlayers.remove(player);
             removePlayer(player);
@@ -300,6 +316,7 @@ public class GameHandler {
             removePlayer(player);
         } else {
             long toSubtract = currentBet - player.getCurrentBet();
+            System.out.println("Для вычета: " + toSubtract);
             player.subtractMoney(toSubtract);
             pot += toSubtract;
             player.setCurrentBet(currentBet);
@@ -333,15 +350,15 @@ public class GameHandler {
 
     private void handleAllIn(Player player) {
         long bet = player.getDefaultMoney();
-        long currentMoney = player.getMoney();
-        player.subtractMoney(currentMoney);
+        long toSubtract = bet - player.getCurrentBet();
+        player.subtractMoney(toSubtract);
         if (currentBet >= bet) {
-            pot += bet - currentMoney;
+            pot += toSubtract;
             sendBroadcast(GameServerMessageUtils.createMessage(GameMessageType.PLAYER_ALL_INNED, "%s;-1".formatted(player.getUsername()).getBytes()), player.getUsername());
         } else {
             currentBet = bet;
             lastRaiser = currentStep;
-            pot += bet - currentMoney;
+            pot += toSubtract;
             sendBroadcast(GameServerMessageUtils.createMessage(GameMessageType.PLAYER_ALL_INNED, "%s;%d".formatted(player.getUsername(), bet).getBytes()), player.getUsername());
         }
         player.setAllInned(true);
@@ -349,9 +366,7 @@ public class GameHandler {
     }
 
     private void nextTurn() {
-        do {
-            currentStep = (currentStep + 1) % activePlayers.size();
-        } while (!activePlayers.get(currentStep).isFolded());  // Пропускаем выбывших игроков
+        currentStep = (currentStep + 1) % activePlayers.size();
     }
 
     private void endGame() {
@@ -369,17 +384,22 @@ public class GameHandler {
                 gameResult.append(";");
                 gameResult.append("1");
                 gameResult.append(";");
-                gameResult.append(player.getMoney());
-                gameResult.append(";");
                 gameResult.append(player.getHand().get(0).toString());
                 gameResult.append(";");
                 gameResult.append(player.getHand().get(1).toString());
                 gameResult.append("\n");
+                socketServer.sendRequestToClientServer(ClientServerMessageUtils.createMessage(ClientMessageType.UPDATE_USER_DATA_REQUEST, "%s;%s".formatted(player.getUsername(), player.getDefaultMoney()).getBytes()));
             }
             gameResult.deleteCharAt(gameResult.length() - 1);
             sendBroadcastToAll(GameServerMessageUtils.createMessage(GameMessageType.GAME_END, gameResult.toString().getBytes()));
 
-            activePlayers.forEach(Player::reset);
+            activePlayers.forEach(p -> {
+                try {
+                    p.getSocket().close();
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            });
         } else {
             List<Player> notFoldedPlayers = activePlayers.stream().filter(r -> !r.isFolded()).toList();
 
@@ -401,26 +421,27 @@ public class GameHandler {
                     .toList();
 
             long winnings = pot / winners.size();
+            System.out.println(winnings);
             List<Player> otherPlayers = new ArrayList<>(activePlayers);
             otherPlayers.removeAll(winners);
 
             winners.forEach(p -> p.addMoney(winnings));
+            winners.forEach(p -> System.out.println("Деньги игрока: " + p.getUsername() + " = " + p.getMoney()));
+            System.out.println("___________________________________-");
             activePlayers.forEach(p -> p.setDefaultMoney(p.getMoney()));
-            activePlayers.forEach(Player::reset);
-
-            //TODO добавить отправку обновления баланса игрока на сервер!
+            activePlayers.forEach(p -> System.out.println("Деньги игрока: " + p.getUsername() + " = " + p.getDefaultMoney()));
 
             for (Player player: winners) {
                 gameResult.append(player.getUsername());
                 gameResult.append(";");
                 gameResult.append("1");
                 gameResult.append(";");
-                gameResult.append(player.getMoney());
-                gameResult.append(";");
                 gameResult.append(player.getHand().get(0).toString());
                 gameResult.append(";");
                 gameResult.append(player.getHand().get(1).toString());
                 gameResult.append("\n");
+                ClientServerMessage answer = socketServer.sendRequestToClientServer(ClientServerMessageUtils.createMessage(ClientMessageType.UPDATE_USER_DATA_REQUEST, "%s;%d".formatted(player.getUsername(), player.getDefaultMoney()).getBytes()));
+                System.out.println("Значение денег в базе у игрока " + player.getUsername() + " - " + new String(answer.getData()));
             }
             if (!otherPlayers.isEmpty()) {
                 for (Player player: otherPlayers) {
@@ -428,17 +449,26 @@ public class GameHandler {
                     gameResult.append(";");
                     gameResult.append("0");
                     gameResult.append(";");
-                    gameResult.append(player.getMoney());
-                    gameResult.append(";");
                     gameResult.append(player.getHand().get(0).toString());
                     gameResult.append(";");
                     gameResult.append(player.getHand().get(1).toString());
                     gameResult.append("\n");
+                    ClientServerMessage answer = socketServer.sendRequestToClientServer(ClientServerMessageUtils.createMessage(ClientMessageType.UPDATE_USER_DATA_REQUEST, "%s;%d".formatted(player.getUsername(), player.getDefaultMoney()).getBytes()));
+                    System.out.println("Значение денег в базе у игрока " + player.getUsername() + " - " + new String(answer.getData()));
                 }
             }
             gameResult.deleteCharAt(gameResult.length() - 1);
             sendBroadcastToAll(GameServerMessageUtils.createMessage(GameMessageType.GAME_END, gameResult.toString().getBytes()));
+
+            activePlayers.forEach(p -> {
+                try {
+                    p.getSocket().close();
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            });
         }
+        room.getManager().removeRoom(room);
     }
 
 }
