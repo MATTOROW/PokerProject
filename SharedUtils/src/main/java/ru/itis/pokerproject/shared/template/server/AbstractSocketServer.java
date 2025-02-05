@@ -14,12 +14,10 @@ public abstract class AbstractSocketServer<E extends Enum<E>, M extends Abstract
     protected int port;
     protected ServerSocket server;
     protected boolean started;
-    protected SocketArrayList sockets;
 
     public AbstractSocketServer(int port) {
         this.listeners = new ArrayList<>();
         this.port = port;
-        this.sockets = new SocketArrayList();
         this.started = false;
     }
 
@@ -49,5 +47,5 @@ public abstract class AbstractSocketServer<E extends Enum<E>, M extends Abstract
     protected abstract void handleConnection(Socket socket);
 
     @Override
-    public abstract void sendMessage(int connectionId, M message) throws ServerException;
+    public abstract void sendMessage(Socket socket, M message) throws ServerException;
 }

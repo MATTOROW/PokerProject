@@ -10,11 +10,12 @@ import ru.itis.pokerproject.shared.protocol.gameserver.GameServerMessageUtils;
 import ru.itis.pokerproject.shared.template.listener.ServerEventListener;
 import ru.itis.pokerproject.shared.template.listener.ServerEventListenerException;
 
+import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 
 public class CreateRoomEventListener implements ServerEventListener<ClientMessageType, ClientServerMessage> {
     @Override
-    public ClientServerMessage handle(int connectionId, ClientServerMessage message) throws ServerEventListenerException {
+    public ClientServerMessage handle(Socket socket, ClientServerMessage message) throws ServerEventListenerException {
         String data = new String(message.getData(), StandardCharsets.UTF_8);
         String[] parts = data.split(";");
         if (parts.length != 2) {

@@ -7,11 +7,12 @@ import ru.itis.pokerproject.shared.protocol.clientserver.ClientServerMessageUtil
 import ru.itis.pokerproject.shared.template.listener.ServerEventListener;
 import ru.itis.pokerproject.shared.template.listener.ServerEventListenerException;
 
+import java.net.Socket;
 import java.util.UUID;
 
 public class ConnectToRoomEventListener implements ServerEventListener<ClientMessageType, ClientServerMessage> {
     @Override
-    public ClientServerMessage handle(int connectionId, ClientServerMessage message) throws ServerEventListenerException {
+    public ClientServerMessage handle(Socket socket, ClientServerMessage message) throws ServerEventListenerException {
         UUID roomCode = UUID.fromString(new String(message.getData()));
         byte[] data = ConnectToRoomService.getServerAddress(roomCode);
         ClientServerMessage answer;

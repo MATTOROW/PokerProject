@@ -5,9 +5,11 @@ import ru.itis.pokerproject.shared.protocol.gameserver.GameMessageType;
 import ru.itis.pokerproject.shared.protocol.gameserver.GameServerMessage;
 import ru.itis.pokerproject.shared.template.listener.ServerEventListenerException;
 
+import java.net.Socket;
+
 public class PlayerReadyEventListener {
-    public void handle(int connectionId, GameServerMessage message) throws ServerEventListenerException {
-        PlayerReadyService.setReady(connectionId);
+    public void handle(Socket socket, GameServerMessage message) throws ServerEventListenerException {
+        PlayerReadyService.setReady(socket);
     }
 
     public GameMessageType getType() {

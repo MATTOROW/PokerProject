@@ -8,11 +8,12 @@ import ru.itis.pokerproject.shared.protocol.clientserver.ClientServerMessageUtil
 import ru.itis.pokerproject.shared.template.listener.ServerEventListener;
 import ru.itis.pokerproject.shared.template.listener.ServerEventListenerException;
 
+import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 
 public class RegisterEventListener implements ServerEventListener<ClientMessageType, ClientServerMessage> {
     @Override
-    public ClientServerMessage handle(int connectionId, ClientServerMessage message) throws ServerEventListenerException {
+    public ClientServerMessage handle(Socket socket, ClientServerMessage message) throws ServerEventListenerException {
         // Could be more optimized and safer
         String data = new String(message.getData(), StandardCharsets.UTF_8);
         String[] parts = data.split(";", 2);

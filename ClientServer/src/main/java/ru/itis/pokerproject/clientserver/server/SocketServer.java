@@ -45,21 +45,18 @@ public class SocketServer extends AbstractSocketServer<ClientMessageType, Client
     }
 
     protected void handleConnection(Socket socket) {
-        sockets.add(socket);
         new Thread(() -> {
-            int connectionId = sockets.lastIndexOf(socket);
             try {
                 InputStream inputStream = socket.getInputStream();
-                while (!socket.isClosed() && sockets.contains(socket)) {
+                while (!socket.isClosed()) {
                     boolean handled = false;
                     ClientServerMessage message = ClientServerMessageUtils.readMessage(inputStream);
 
                     if (message.getType() == ClientMessageType.REGISTER_GAME_SERVER_REQUEST) {
-                        sockets.removeWithoutClosing(socket);
                         gameServersToListen.add(socket);
                         String[] connectionData = new String(message.getData()).split(":");
                         gameServersToSend.add(new Socket(connectionData[0], Integer.parseInt(connectionData[1])));
-                        connectionId = gameServersToListen.lastIndexOf(socket);
+                        int connectionId = gameServersToListen.lastIndexOf(socket);
                         sendMessageToGameServer(connectionId, ClientServerMessageUtils.createMessage(ClientMessageType.REGISTER_GAME_SERVER_RESPONSE, new byte[0]));
                         handleServerConnection(socket);
                     } else {
@@ -67,8 +64,8 @@ public class SocketServer extends AbstractSocketServer<ClientMessageType, Client
                             if (message.getType() == listener.getType()) {
                                 System.out.println("Нашелся нужный!" + message.getType());
                                 handled = true;
-                                ClientServerMessage answer = listener.handle(connectionId, message);
-                                sendMessage(connectionId, answer);
+                                ClientServerMessage answer = listener.handle(socket, message);
+                                sendMessage(socket, answer);
                             }
                         }
                         if (!handled) {
@@ -77,23 +74,31 @@ public class SocketServer extends AbstractSocketServer<ClientMessageType, Client
                                     "You are not allowed to recieve data using this message type: %s."
                                             .formatted(message.getType()).getBytes()
                             );
-                            sendMessage(connectionId, error);
+                            sendMessage(socket, error);
                         }
                     }
                 }
             } catch (EmptyMessageException | MessageReadingException e) {
-                sockets.remove(socket);
+                try {
+                    socket.close();
+                } catch (IOException ex) {
+                    throw new RuntimeException(ex);
+                }
             } catch (ExceedingLengthException | UnknownMessageTypeException | WrongStartBytesException e) {
                 ClientServerMessage errorMessage = ClientServerMessageUtils.createMessage(
                         ClientMessageType.ERROR,
                         "Error while connecting to server.".getBytes()
                 );
                 System.out.println(e.getMessage());
-                sendMessage(connectionId, errorMessage);
+                sendMessage(socket, errorMessage);
             } catch (IOException | ServerEventListenerException e) {
                 System.err.println("Error handling connection: " + e.getMessage());
             } finally {
-                sockets.remove(socket);
+                try {
+                    socket.close();
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
             }
         }).start();
     }
@@ -109,8 +114,8 @@ public class SocketServer extends AbstractSocketServer<ClientMessageType, Client
                         if (message.getType() == listener.getType()) {
                             System.out.println("Нашелся нужный!" + message.getType());
                             handled = true;
-                            ClientServerMessage answer = listener.handle(connectionId, message);
-                            sendMessage(connectionId, answer);
+                            ClientServerMessage answer = listener.handle(socket, message);
+                            sendMessageToGameServer(connectionId, answer);
                         }
                     }
                     if (!handled) {
@@ -130,7 +135,7 @@ public class SocketServer extends AbstractSocketServer<ClientMessageType, Client
                         ClientMessageType.ERROR,
                         "Error while connecting to server.".getBytes()
                 );
-                sendMessage(connectionId, errorMessage);
+                sendMessageToGameServer(connectionId, errorMessage);
             } catch (IOException | ServerEventListenerException e) {
                 System.err.println("Error handling connection: " + e.getMessage());
             } finally {
@@ -143,17 +148,15 @@ public class SocketServer extends AbstractSocketServer<ClientMessageType, Client
     }
 
     @Override
-    public void sendMessage(int connectionId, ClientServerMessage message) throws ServerException {
+    public void sendMessage(Socket socket, ClientServerMessage message) throws ServerException {
         if (!started) {
             throw new ServerException("Server hasn't been started yet.");
         }
         try {
-            Socket socket = sockets.get(connectionId);
             socket.getOutputStream().write(ClientServerMessageUtils.getBytes(message));
             socket.getOutputStream().flush();
         } catch (IOException e) {
             e.printStackTrace();
-
         }
     }
 

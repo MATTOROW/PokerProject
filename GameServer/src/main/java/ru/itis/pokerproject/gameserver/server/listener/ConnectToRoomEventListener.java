@@ -8,6 +8,7 @@ import ru.itis.pokerproject.shared.protocol.gameserver.GameServerMessageUtils;
 import ru.itis.pokerproject.shared.template.listener.ServerEventListener;
 import ru.itis.pokerproject.shared.template.listener.ServerEventListenerException;
 
+import java.net.Socket;
 import java.util.UUID;
 
 public class ConnectToRoomEventListener implements ServerEventListener<GameMessageType, GameServerMessage> {
@@ -18,11 +19,11 @@ public class ConnectToRoomEventListener implements ServerEventListener<GameMessa
     }
 
     @Override
-    public GameServerMessage handle(int connectionId, GameServerMessage message) throws ServerEventListenerException {
+    public GameServerMessage handle(Socket socket, GameServerMessage message) throws ServerEventListenerException {
         String[] data = new String(message.getData()).split(";");
         String roomId = data[0];
         String token = data[1];
-        byte[] answerData = ConnectToRoomService.connectToRoom(connectionId, UUID.fromString(roomId), token);
+        byte[] answerData = ConnectToRoomService.connectToRoom(socket, UUID.fromString(roomId), token);
         GameServerMessage answer;
         if (answerData == null) {
             answer = GameServerMessageUtils.createMessage(GameMessageType.ERROR, "Either your token expired and you need to re login, or your money is 0, connection refused".getBytes());

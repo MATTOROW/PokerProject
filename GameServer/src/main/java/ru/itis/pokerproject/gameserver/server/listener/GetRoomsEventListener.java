@@ -7,9 +7,11 @@ import ru.itis.pokerproject.shared.protocol.gameserver.GameServerMessageUtils;
 import ru.itis.pokerproject.shared.template.listener.ServerEventListener;
 import ru.itis.pokerproject.shared.template.listener.ServerEventListenerException;
 
+import java.net.Socket;
+
 public class GetRoomsEventListener implements ServerEventListener<GameMessageType, GameServerMessage> {
     @Override
-    public GameServerMessage handle(int connectionId, GameServerMessage message) throws ServerEventListenerException {
+    public GameServerMessage handle(Socket socket, GameServerMessage message) throws ServerEventListenerException {
         return GameServerMessageUtils.createMessage(GameMessageType.GET_ROOMS_RESPONSE, GetRoomsInfoService.getRooms());
     }
 

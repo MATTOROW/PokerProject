@@ -9,6 +9,7 @@ import ru.itis.pokerproject.gameserver.server.RoomManager;
 import ru.itis.pokerproject.gameserver.server.SocketServer;
 import ru.itis.pokerproject.shared.template.server.ServerException;
 
+import java.net.Socket;
 import java.util.Date;
 import java.util.UUID;
 
@@ -21,7 +22,7 @@ public class ConnectToRoomService {
         init = true;
     }
 
-    public static byte[] connectToRoom(int connectionId, UUID code, String token) {
+    public static byte[] connectToRoom(Socket socket, UUID code, String token) {
         if (!init) {
             throw new ServerException("Server is not initialized!");
         }
@@ -48,7 +49,7 @@ public class ConnectToRoomService {
             return new byte[0]; // Комната не найдена
         }
 
-        boolean added = handler.addPlayer(new Player(server.getSocket(connectionId), username, money));
+        boolean added = handler.addPlayer(new Player(socket, username, money));
         if (!added) {
             return new byte[0]; // Комната заполнена
         }

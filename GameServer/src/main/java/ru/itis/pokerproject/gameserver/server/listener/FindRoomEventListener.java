@@ -7,11 +7,12 @@ import ru.itis.pokerproject.shared.protocol.gameserver.GameServerMessageUtils;
 import ru.itis.pokerproject.shared.template.listener.ServerEventListener;
 import ru.itis.pokerproject.shared.template.listener.ServerEventListenerException;
 
+import java.net.Socket;
 import java.util.UUID;
 
 public class FindRoomEventListener implements ServerEventListener<GameMessageType, GameServerMessage> {
     @Override
-    public GameServerMessage handle(int connectionId, GameServerMessage message) throws ServerEventListenerException {
+    public GameServerMessage handle(Socket socket, GameServerMessage message) throws ServerEventListenerException {
         UUID code = UUID.fromString(new String(message.getData()));
         return GameServerMessageUtils.createMessage(GameMessageType.FIND_ROOM_RESPONSE, FindRoomService.findRoom(code));
     }

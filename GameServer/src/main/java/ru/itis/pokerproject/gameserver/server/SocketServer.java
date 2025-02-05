@@ -1,8 +1,5 @@
 package ru.itis.pokerproject.gameserver.server;
 
-import ru.itis.pokerproject.gameserver.model.GameHandler;
-import ru.itis.pokerproject.gameserver.model.Room;
-import ru.itis.pokerproject.gameserver.model.game.Player;
 import ru.itis.pokerproject.gameserver.server.listener.ConnectToRoomEventListener;
 import ru.itis.pokerproject.gameserver.server.listener.PlayerReadyEventListener;
 import ru.itis.pokerproject.gameserver.service.*;
@@ -51,24 +48,22 @@ public class SocketServer extends AbstractSocketServer<GameMessageType, GameServ
     }
 
     protected void handleConnection(Socket socket) {
-        sockets.add(socket);
         new Thread(() -> {
-            int connectionId = sockets.lastIndexOf(socket);
             try {
                 InputStream inputStream = socket.getInputStream();
                 GameServerMessage message = readMessage(inputStream);
                 ConnectToRoomEventListener listener = new ConnectToRoomEventListener(this);
                 if (message.getType() == listener.getType()) {
-                    GameServerMessage answer = listener.handle(connectionId, message);
-                    sendMessage(connectionId, answer);
+                    GameServerMessage answer = listener.handle(socket, message);
+                    sendMessage(socket, answer);
                     if (answer.getType() == GameMessageType.ERROR) {
-                        sockets.remove(socket);
+                        socket.close();
                     } else {
                         GameServerMessage ready = readMessage(inputStream);
                         PlayerReadyEventListener readyListener = new PlayerReadyEventListener();
                         if (ready.getType() == readyListener.getType()) {
                             System.out.println("Реально ready!");
-                            readyListener.handle(connectionId, ready);
+                            readyListener.handle(socket, ready);
                         }
                     }
                 } else {
@@ -77,22 +72,34 @@ public class SocketServer extends AbstractSocketServer<GameMessageType, GameServ
                             "You are not allowed to receive data using this message type: %s."
                                     .formatted(message.getType()).getBytes()
                     );
-                    sendMessage(connectionId, error);
-                    sockets.remove(socket);
+                    sendMessage(socket, error);
+                    socket.close();
                 }
             } catch (EmptyMessageException | MessageReadingException e) {
                 System.out.println("Lost connect");
                 DisconnectFromRoomService.disconnectFromRoom(socket);
-                sockets.remove(socket);
+                try {
+                    socket.close();
+                } catch (IOException ex) {
+                    throw new RuntimeException(ex);
+                }
             } catch (ExceedingLengthException | UnknownMessageTypeException | WrongStartBytesException e) {
                 GameServerMessage errorMessage = GameServerMessageUtils.createMessage(
                         GameMessageType.ERROR,
                         "Error while connecting to server.".getBytes()
                 );
-                sendMessage(connectionId, errorMessage);
-                sockets.remove(socket);
+                sendMessage(socket, errorMessage);
+                try {
+                    socket.close();
+                } catch (IOException ex) {
+                    throw new RuntimeException(ex);
+                }
             } catch (IOException | ServerEventListenerException e) {
-                sockets.remove(socket);
+                try {
+                    socket.close();
+                } catch (IOException ex) {
+                    throw new RuntimeException(ex);
+                }
                 System.err.println("Error handling connection: " + e.getMessage());
             }
         }).start();
@@ -109,7 +116,7 @@ public class SocketServer extends AbstractSocketServer<GameMessageType, GameServ
                     for (ServerEventListener<GameMessageType, GameServerMessage> listener : clientServerListeners) {
                         if (message.getType() == listener.getType()) {
                             handled = true;
-                            GameServerMessage answer = listener.handle(connectionId, message);
+                            GameServerMessage answer = listener.handle(clientServerToListen, message);
                             sendMessageToClientServer(answer);
                         }
                     }
@@ -149,15 +156,6 @@ public class SocketServer extends AbstractSocketServer<GameMessageType, GameServ
         this.clientServerListeners.add(listener);
     }
 
-    @Override
-    public void sendMessage(int connectionId, GameServerMessage message) throws ServerException {
-        if (!started) {
-            throw new ServerException("Server hasn't been started yet.");
-        }
-        Socket socket = sockets.get(connectionId);
-        sendMessage(socket, message);
-    }
-
     public void sendMessage(Socket socket, GameServerMessage message) {
         if (!started) {
             throw new ServerException("Server hasn't been started yet.");
@@ -186,10 +184,6 @@ public class SocketServer extends AbstractSocketServer<GameMessageType, GameServ
         } catch (IOException e) {
             throw new ServerException("Can't read a message.");
         }
-    }
-
-    public Socket getSocket(int connectionId) {
-        return this.sockets.get(connectionId);
     }
 
     public void connect() {
