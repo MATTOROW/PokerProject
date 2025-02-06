@@ -8,8 +8,9 @@ import java.util.List;
 
 public class PlayerInfo {
     private String username;
-    // Заменяем поле money на наблюдаемое свойство
+
     private final SimpleLongProperty moneyProperty;
+    private long defaultMoney;
     private boolean isReady;
     private List<Card> hand;
     private boolean isFolded;
@@ -18,6 +19,7 @@ public class PlayerInfo {
     public PlayerInfo(String username, long money, boolean isReady) {
         this.username = username;
         this.moneyProperty = new SimpleLongProperty(money);
+        this.defaultMoney = money;
         this.isReady = isReady;
         hand = new ArrayList<>(2);
     }
@@ -26,19 +28,27 @@ public class PlayerInfo {
         return username;
     }
 
-    // Геттер для наблюдаемого свойства
+
     public SimpleLongProperty moneyProperty() {
         return moneyProperty;
     }
 
-    // Геттер, возвращающий текущее значение
+
     public long getMoney() {
         return moneyProperty.get();
     }
 
-    // Сеттер – обновляет значение свойства
+
     public void setMoney(long money) {
         this.moneyProperty.set(money);
+    }
+
+    public long getDefaultMoney() {
+        return defaultMoney;
+    }
+
+    public void setDefaultMoney(long defaultMoney) {
+        this.defaultMoney = defaultMoney;
     }
 
     public boolean isReady() {
@@ -61,7 +71,7 @@ public class PlayerInfo {
         this.hand = hand;
     }
 
-    // При вычитании денег обновляем наблюдаемое свойство
+
     public void subtractMoney(long money) {
         this.moneyProperty.set(this.moneyProperty.get() - money);
     }

@@ -21,27 +21,27 @@ public class WaitForActionEventListener implements GameEventListener {
 
             long toCall = currentBet - playerBet; // Сколько нужно добавить для уравнивания
 
-            // Дальнейшая логика активации кнопок и установки ограничений...
+
             Platform.runLater(gameScreen::restoreActionButtons);
 
-            // Активация кнопок
+
             gameScreen.getFoldButton().setDisable(false);
             gameScreen.getAllInButton().setDisable(false);
 
-            // CHECK доступен, если игрок уже поставил достаточно
+
             System.out.println("Ставка игрока: " + playerBet);
             System.out.println("Ставка в игре: " + currentBet);
             gameScreen.getCheckButton().setDisable(currentBet != playerBet);
 
-            // CALL доступен, если у игрока хватает денег на уравнивание
+
             gameScreen.getCallButton().setDisable(playerMoney <= toCall || currentBet == 0);
 
-            // Устанавливаем ограничения на ввод Raise
+
             TextField raiseInput = gameScreen.getRaiseAmountField();
             raiseInput.setDisable(playerMoney <= toCall); // Поле недоступно, если Raise невозможен
             raiseInput.setText(""); // Очищаем предыдущее значение
 
-            // Устанавливаем допустимые границы для RAISE
+
             if (playerMoney > toCall) {
                 long minRaise = currentBet + 1;
                 long maxRaise = playerBet + playerMoney;

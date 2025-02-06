@@ -17,6 +17,7 @@ public class PlayerCalledEventListener implements GameEventListener {
         if (player != null) {
             player.subtractMoney(toSubtract);
             Game.setPot(Game.getPot() + toSubtract);
+            player.setCurrentBet(toSubtract);
 
             Platform.runLater(() -> {
                 Game.getGameScreen().updatePotAndBet();

@@ -19,6 +19,7 @@ public class PlayerRaisedEventListener implements GameEventListener {
             player.subtractMoney(toSubtract);
             Game.setPot(Game.getPot() + toSubtract);
             Game.setCurrentBet(bet);
+            player.setCurrentBet(toSubtract);
 
             Platform.runLater(() -> {
                 Game.getGameScreen().updatePotAndBet();

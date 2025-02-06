@@ -4,7 +4,7 @@ import ru.itis.pokerproject.clientserver.model.AccountEntity;
 import ru.itis.pokerproject.shared.dto.request.AccountRequest;
 import ru.itis.pokerproject.shared.dto.response.AccountResponse;
 
-// Probably will be deleted because it useless
+
 public class AccountEntityMapper implements EntityMapper<AccountEntity, AccountRequest, AccountResponse> {
     @Override
     public AccountEntity toEntity(AccountRequest request) {

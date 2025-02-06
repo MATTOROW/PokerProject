@@ -18,7 +18,7 @@ public class App extends Application {
 
     @Override
     public void start(Stage primaryStage) throws UnknownHostException {
-        // Создаем клиент для взаимодействия с сервером
+
         this.client = new SocketClient(InetAddress.getByName(HOST), PORT);
 
         ConnectionErrorHandler handler = new ConnectionErrorHandler(client);
@@ -43,7 +43,7 @@ public class App extends Application {
             handler.showConnectionErrorDialog(primaryStage);
         }
 
-        // Создаем экран логина
+
         ScreenManager manager = new ScreenManager(primaryStage, handler, client);
         manager.showLoginScreen();
     }

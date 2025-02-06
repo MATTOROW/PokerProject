@@ -35,13 +35,13 @@ public class ScreenManager {
 
         this.primaryStage = primaryStage;
 
-        // Создаем экраны один раз
+
         this.loginScreen = new LoginScreen(authService, this);
         this.registerScreen = new RegisterScreen(authService, this);
         this.roomsScreen = new RoomsScreen(getRoomsService, createRoomService, connectToRoomService, this);
         Game.setManager(this);
 
-        // Устанавливаем начальный экран
+
         primaryStage.setScene(new Scene(loginScreen.getView()));
         primaryStage.sizeToScene();
         primaryStage.show();

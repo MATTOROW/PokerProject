@@ -15,7 +15,7 @@ public class LoginEventListener implements ServerEventListener<ClientMessageType
 
     @Override
     public ClientServerMessage handle(Socket socket, ClientServerMessage message) throws ServerEventListenerException {
-        // Could be more optimized and safer
+
         String data = new String(message.getData(), StandardCharsets.UTF_8);
         String[] parts = data.split(";", 2);
         if (parts.length != 2) {

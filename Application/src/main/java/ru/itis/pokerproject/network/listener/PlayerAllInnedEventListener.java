@@ -15,9 +15,12 @@ public class PlayerAllInnedEventListener implements GameEventListener {
 
         PlayerInfo player = Game.getPlayerByUsername(username);
         if (player != null) {
-            long moneyLeft = player.getMoney();
-            player.subtractMoney(moneyLeft);
-            Game.setPot(Game.getPot() + moneyLeft);
+            long allMoney = player.getDefaultMoney();
+            long toSubtract = allMoney - player.getCurrentBet();
+            System.out.println("ВСЕ ДЕНЬГИ ИГРОКА АЛЛ ИН: " + allMoney);
+            System.out.println("НУЖНО ВЫЧЕСТЬ: " + toSubtract);
+            player.subtractMoney(toSubtract);
+            Game.setPot(Game.getPot() + toSubtract);
 
             if (bet != -1) {
                 Game.setCurrentBet(bet);
@@ -26,7 +29,7 @@ public class PlayerAllInnedEventListener implements GameEventListener {
             Platform.runLater(() -> {
                 Game.getGameScreen().updatePotAndBet();
                 Game.getGameScreen().updateUI();
-                Game.getGameScreen().showNotification(username + " пошел ALL IN (" + moneyLeft + ")");
+                Game.getGameScreen().showNotification(username + " пошел ALL IN (" + toSubtract + ")");
             });
         }
     }

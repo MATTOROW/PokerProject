@@ -26,45 +26,45 @@ import java.util.List;
 
 public class GameScreen extends BorderPane {
 
-    // Параметры игры
+
     private int maxPlayers;
     private int currentPlayers;
     private long minBet;
 
-    // Список противников (остальные игроки)
+
     private List<PlayerInfo> opponents;
-    // Ваш игрок
+
     private PlayerInfo myPlayer;
     private final ScreenManager manager;
     private boolean gameStarted = false; // Флаг: игра началась
 
-    // Элементы для банка и текущей ставки
+
     private Label potLabel;
     private Label currentBetLabel;
     private Label bankValueLabel;
     private Label currentBetValueLabel;
 
-    // Метка уведомлений
+
     private Label notificationLabel;
 
-    // Верхняя область – панель противников
+
     private HBox opponentsPane;
 
-    // Центральная область – стол, общие карты и информация о банке/ставке
+
     private StackPane centerPane;
     private Ellipse tableShape;         // Графика стола
     private HBox communityCardsBox;     // Контейнер для 5 общих карт
     private List<Label> communityCardLabels; // Метки для общих карт
 
-    // Нижняя область – информация о вашем игроке и панель готовности/действий
+
     private HBox bottomContainer;
     private VBox myPlayerInfoPane;      // Информация о вашем игроке
-    // В нижней области в начальном состоянии отображается панель готовности (readinessPanel),
-    // а после старта игры – панель игровых действий (actionButtonsPane)
+
+
     private HBox readinessPanel;
     private HBox actionButtonsPane;
 
-    // Элементы игровых действий
+
     private Button foldButton;
     private Button checkButton;
     private Button callButton;
@@ -72,10 +72,10 @@ public class GameScreen extends BorderPane {
     private Button allInButton;
     private TextField raiseAmountField;
 
-    // Кнопка готовности
+
     private Button readyButton;
 
-    // Сервис для отправки статуса готовности
+
     private final SendReadyStatusService sendReadyStatusService;
     private final SendMessageToGameServerService sendMessageToGameServerService;
 
@@ -83,7 +83,7 @@ public class GameScreen extends BorderPane {
         this.maxPlayers = maxPlayers;
         this.currentPlayers = currentPlayers;
         this.minBet = minBet;
-        // Передаём список противников (players – список остальных игроков, без вашего)
+
         this.opponents = players;
         this.myPlayer = myPlayer;
         this.manager = manager;
@@ -94,31 +94,29 @@ public class GameScreen extends BorderPane {
         updateUI();
     }
 
-    /**
-     * Настраивает лейаут экрана.
-     */
+    
     private void setupLayout() {
-        // Фон всего экрана
+
         this.setStyle("-fx-background-color: darkslategray;");
 
-        // Верхняя область: панель противников
+
         opponentsPane = new HBox(20);
         opponentsPane.setAlignment(Pos.CENTER);
         opponentsPane.setPadding(new Insets(10));
         opponentsPane.setStyle("-fx-background-color: rgba(0, 0, 0, 0.2);");
         this.setTop(opponentsPane);
 
-        // Центральная область: стол и общие карты
+
         centerPane = new StackPane();
         centerPane.setPrefSize(800, 600);
 
-        // Графика стола – эллипс
+
         tableShape = new Ellipse(200, 120);
         tableShape.setFill(Color.DARKGREEN);
         tableShape.setStroke(Color.BLACK);
         tableShape.setStrokeWidth(2);
 
-        // Контейнер для общих карт – 5 меток (изначально рубашки)
+
         communityCardsBox = new HBox(10);
         communityCardsBox.setAlignment(Pos.CENTER);
         communityCardLabels = new ArrayList<>();
@@ -128,15 +126,15 @@ public class GameScreen extends BorderPane {
             communityCardsBox.getChildren().add(cardLabel);
         }
 
-        // Объединяем стол и общие карты
+
         StackPane tableContainer = new StackPane();
         tableContainer.setPrefSize(400, 300);
         tableContainer.getChildren().addAll(tableShape, communityCardsBox);
         StackPane.setAlignment(communityCardsBox, Pos.CENTER);
 
-        // Блок с информацией о банке и текущей ставке – располагается поверх стола
 
-// Создаем статичные метки
+
+
         Label bankStaticLabel = new Label("Банк: ");
         bankStaticLabel.setStyle("-fx-text-fill: gold; -fx-font-size: 16px;");
         bankValueLabel = new Label(String.valueOf(Game.getPot()));
@@ -151,7 +149,7 @@ public class GameScreen extends BorderPane {
         HBox currentBetBox = new HBox(5, currentBetStaticLabel, currentBetValueLabel);
         currentBetBox.setAlignment(Pos.CENTER);
 
-// Объединяем в VBox
+
         VBox potInfoBox = new VBox(5, bankBox, currentBetBox);
         potInfoBox.setAlignment(Pos.TOP_CENTER);
         potInfoBox.setPadding(new Insets(10));
@@ -161,7 +159,7 @@ public class GameScreen extends BorderPane {
         centerPane.getChildren().addAll(tableContainer, potInfoBox);
 
 
-        // Уведомления
+
         notificationLabel = new Label();
         notificationLabel.setStyle("-fx-background-color: rgba(0,0,0,0.7); -fx-text-fill: white; -fx-padding: 5px; -fx-font-size: 14px;");
         notificationLabel.setVisible(false);
@@ -173,7 +171,7 @@ public class GameScreen extends BorderPane {
 
         this.setCenter(centerPane);
 
-        // Нижняя область: информация о вашем игроке и панель готовности/действий
+
         myPlayerInfoPane = createMyPlayerInfoPane();
         readyButton = new Button("Готов");
         readyButton.setStyle("-fx-font-size: 16px; -fx-padding: 10px;");
@@ -188,27 +186,25 @@ public class GameScreen extends BorderPane {
         this.setBottom(bottomContainer);
     }
 
-    /**
-     * Создаёт панель с информацией о вашем игроке, включая его карты.
-     */
+    
     private VBox createMyPlayerInfoPane() {
         VBox box = new VBox(5);
         box.setAlignment(Pos.CENTER_LEFT);
         box.setStyle("-fx-background-color: rgba(0, 0, 0, 0.5); -fx-padding: 5; -fx-border-color: white; -fx-border-width: 1;");
 
-        // Отображаем имя игрока
+
         Label nameLabel = new Label(myPlayer.getUsername());
         nameLabel.setStyle("-fx-text-fill: white; -fx-font-weight: bold;");
 
-        // Создаем метку для баланса и устанавливаем биндинг к moneyProperty
+
         Label moneyLabel = new Label();
-        // Форматируем текст: например, "Баланс: 1000"
+
         moneyLabel.textProperty().bind(myPlayer.moneyProperty().asString("Баланс: %d"));
         moneyLabel.setStyle("-fx-text-fill: gold; -fx-font-size: 14px;");
 
         box.getChildren().addAll(nameLabel, moneyLabel);
 
-        // Панель для отображения карт (как ранее)
+
         HBox cardsBox = new HBox(5);
         cardsBox.setAlignment(Pos.CENTER);
         List<Card> myCards = myPlayer.getHand();
@@ -229,39 +225,29 @@ public class GameScreen extends BorderPane {
     }
 
 
-    /**
-     * Обновляет интерфейс: банк, информация о вашем игроке и противниках.
-     */
+    
     public void updateUI() {
         updatePotAndBet();
         updateMyPlayerInfo();
         updateOpponentsUI();
     }
 
-    /**
-     * Обновляет метки банка и текущей ставки.
-     */
-    /**
-     * Обновляет динамические метки для банка и текущей ставки.
-     */
+    
+    
     public void updatePotAndBet() {
         bankValueLabel.setText(String.valueOf(Game.getPot()));
         currentBetValueLabel.setText(String.valueOf(Game.getCurrentBet()));
     }
 
 
-    /**
-     * Обновляет информацию о вашем игроке.
-     */
+    
     public void updateMyPlayerInfo() {
         VBox newMyInfo = createMyPlayerInfoPane();
         bottomContainer.getChildren().set(0, newMyInfo);
         myPlayerInfoPane = newMyInfo;
     }
 
-    /**
-     * Обновляет панель противников.
-     */
+    
     public void updateOpponentsUI() {
         opponentsPane.getChildren().clear();
         for (PlayerInfo opponent : opponents) {
@@ -270,9 +256,7 @@ public class GameScreen extends BorderPane {
         }
     }
 
-    /**
-     * Создаёт панель для одного противника, включая его карты.
-     */
+    
     private VBox createOpponentBox(PlayerInfo opponent) {
         VBox box = new VBox(5);
         box.setAlignment(Pos.CENTER);
@@ -310,9 +294,7 @@ public class GameScreen extends BorderPane {
         return box;
     }
 
-    /**
-     * Создаёт метку для скрытой карты (рубашка).
-     */
+    
     private Label createHiddenCardLabel() {
         Label cardLabel = new Label("🂠");
         cardLabel.setMinSize(50, 70);
@@ -321,11 +303,9 @@ public class GameScreen extends BorderPane {
         return cardLabel;
     }
 
-    /**
-     * Создаёт метку для открытой карты с мастью и значением.
-     */
+    
     private Label createCardLabel(Card card) {
-        // Получаем символ масти и сокращённое обозначение значения
+
         String suitSymbol = card.suit().getSuitSymbol();
         String valueStr = card.value().getValueRepresentation();
         String cardText = valueStr + suitSymbol;  // например, "J♠"
@@ -334,9 +314,9 @@ public class GameScreen extends BorderPane {
         cardLabel.setMinSize(50, 70);
         cardLabel.setAlignment(Pos.CENTER);
 
-        // Определяем цвет текста в зависимости от масти.
-        // Если масть – HEARTS или DIAMONDS, делаем текст красным.
-        // Если масть – SPADES или CLUBS, используем светло-серый цвет.
+
+
+
         String backGroundColor;
         String textColor;
         switch (card.suit()) {
@@ -353,7 +333,7 @@ public class GameScreen extends BorderPane {
                 break;
         }
 
-        // Применяем стиль с учетом цвета текста.
+
         cardLabel.setStyle("-fx-border-color: white; -fx-background-color: " + backGroundColor +
                 "; -fx-text-fill: " + textColor + "; -fx-font-size: 18px; -fx-font-weight: bold;");
         return cardLabel;
@@ -361,9 +341,7 @@ public class GameScreen extends BorderPane {
 
 
 
-    /**
-     * Обработчик нажатия кнопки "Готов".
-     */
+    
     private void handleReadyButtonClick() {
         readyButton.setDisable(true);
         try {
@@ -373,9 +351,7 @@ public class GameScreen extends BorderPane {
         }
     }
 
-    /**
-     * Переходит в режим игры: меняет панель готовности на панель игровых действий.
-     */
+    
     public void startGame() {
         gameStarted = true;
         bottomContainer.getChildren().remove(1); // Удаляем панель готовности
@@ -385,12 +361,7 @@ public class GameScreen extends BorderPane {
         updateOpponentsUI();
     }
 
-    /**
-     * Инициализирует панель игровых действий.
-     * Здесь реализованы:
-     * - Ограничение ввода только цифр в поле raiseAmountField.
-     * - Проверка корректности введённого значения для разблокировки кнопки RAISE.
-     */
+    
     public void initializeActionButtons() {
         foldButton = new Button("FOLD");
         checkButton = new Button("CHECK");
@@ -400,7 +371,7 @@ public class GameScreen extends BorderPane {
         raiseAmountField = new TextField();
         raiseAmountField.setPromptText("Ставка");
 
-        // Первоначальная блокировка кнопок и поля
+
         foldButton.setDisable(true);
         checkButton.setDisable(true);
         callButton.setDisable(true);
@@ -408,7 +379,7 @@ public class GameScreen extends BorderPane {
         allInButton.setDisable(true);
         raiseAmountField.setDisable(true);
 
-        // Обработчики кнопок – после выполнения действия скрываем панель и показываем сообщение
+
         foldButton.setOnAction(e -> {
             handleFold();
             showWaitingMessage();
@@ -430,7 +401,7 @@ public class GameScreen extends BorderPane {
             showWaitingMessage();
         });
 
-        // Ограничение ввода только цифр через TextFormatter
+
         raiseAmountField.setTextFormatter(new TextFormatter<>(change -> {
             if (change.getText().matches("\\d*")) {
                 return change;
@@ -438,7 +409,7 @@ public class GameScreen extends BorderPane {
             return null;
         }));
 
-        // Слушатель, проверяющий корректность введённого значения
+
         raiseAmountField.textProperty().addListener((obs, oldValue, newValue) -> {
             long playerMoney = myPlayer.getMoney();
             long playerBet = myPlayer.getCurrentBet();
@@ -467,7 +438,7 @@ public class GameScreen extends BorderPane {
         actionButtonsPane.setPadding(new Insets(10));
     }
 
-    // Обработчики игровых действий
+
 
     private void handleFold() {
         showNotification("Вы сбросили карты (FOLD)");
@@ -523,13 +494,17 @@ public class GameScreen extends BorderPane {
         showNotification("Вы сделали ALL IN");
         try {
             sendMessageToGameServerService.sendMessage(GameServerMessageUtils.createMessage(GameMessageType.ALL_IN, new byte[0]));
-            if (myPlayer.getMoney() < Game.getCurrentBet()) {
-                Game.setPot(Game.getPot() + myPlayer.getMoney());
-                myPlayer.subtractMoney(myPlayer.getMoney());
+            long allMoney = myPlayer.getDefaultMoney();
+            long toSubtract = allMoney - myPlayer.getCurrentBet();
+            System.out.println("Мои первоначальные деньги: " + allMoney);
+            System.out.println("Моя текущая ставка: " + myPlayer.getCurrentBet());
+            if (toSubtract < Game.getCurrentBet()) {
+                Game.setPot(Game.getPot() + toSubtract);
+                myPlayer.subtractMoney(toSubtract);
             } else {
-                Game.setPot(Game.getPot() + myPlayer.getMoney());
-                Game.setCurrentBet(myPlayer.getCurrentBet() + myPlayer.getMoney());
-                myPlayer.subtractMoney(myPlayer.getMoney());
+                Game.setPot(Game.getPot() + toSubtract);
+                Game.setCurrentBet(Game.getCurrentBet() + toSubtract);
+                myPlayer.subtractMoney(toSubtract);
             }
             updatePotAndBet();
         } catch (ClientException e) {
@@ -537,9 +512,7 @@ public class GameScreen extends BorderPane {
         }
     }
 
-    /**
-     * Отображает уведомление, которое затем плавно исчезает.
-     */
+    
     public void showNotification(String message) {
         Platform.runLater(() -> {
             notificationLabel.setText(message);
@@ -555,9 +528,7 @@ public class GameScreen extends BorderPane {
         });
     }
 
-    /**
-     * Метод для замены панели игровых действий сообщением "Ждем действий других игроков..."
-     */
+    
     private void showWaitingMessage() {
         Label waitingLabel = new Label("Ждем действий других игроков...");
         waitingLabel.setStyle("-fx-text-fill: white; -fx-font-size: 16px; -fx-padding: 10px;");
@@ -565,17 +536,12 @@ public class GameScreen extends BorderPane {
         bottomContainer.getChildren().set(1, waitingLabel);
     }
 
-    /**
-     * Восстанавливает панель игровых действий, заменяя сообщение.
-     * Этот метод следует вызывать, когда приходит событие WAITING_FOR_ACTION.
-     */
+    
     public void restoreActionButtons() {
         bottomContainer.getChildren().set(1, actionButtonsPane);
     }
 
-    /**
-     * Обновляет отображение общих карт на столе.
-     */
+    
     public void updateCommunityCards() {
         List<Card> cards = Game.getCommunityCards();
         for (int i = 0; i < communityCardLabels.size(); i++) {
@@ -591,7 +557,7 @@ public class GameScreen extends BorderPane {
         }
     }
 
-    // Геттеры и сеттеры для игровых действий
+
 
     public ScreenManager getManager() {
         return manager;

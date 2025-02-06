@@ -14,7 +14,7 @@ public class CreateRoomEventListener implements ServerEventListener<GameMessageT
 
     @Override
     public GameServerMessage handle(Socket socket, GameServerMessage message) throws ServerEventListenerException {
-        // Could be more optimized and safer
+
         String data = new String(message.getData(), StandardCharsets.UTF_8);
         String[] parts = data.split(";");
         if (parts.length != 2) {

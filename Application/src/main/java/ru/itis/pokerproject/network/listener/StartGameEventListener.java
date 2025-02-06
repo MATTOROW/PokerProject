@@ -17,7 +17,7 @@ public class StartGameEventListener implements GameEventListener {
 
     @Override
     public void handle(GameServerMessage message) {
-        // Разбираем строку "Suit Value;Suit Value"
+
         String[] cardsData = new String(message.getData()).split(";");
         List<Card> cards = Arrays.stream(cardsData)
                 .map(cardStr -> {
@@ -26,14 +26,14 @@ public class StartGameEventListener implements GameEventListener {
                 })
                 .collect(Collectors.toList());
 
-        // Устанавливаем карты текущему игроку
+
         PlayerInfo myPlayer = Game.getMyPlayer();
         myPlayer.setHand(cards);
 
         Game.setPot(0);
         Game.setCurrentBet(Game.getMinBet());
 
-        // Обновляем UI в JavaFX потоке
+
         Platform.runLater(() -> {
             Game.getGameScreen().updateUI();
             Game.getGameScreen().startGame();

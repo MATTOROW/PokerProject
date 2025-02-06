@@ -14,7 +14,7 @@ public class LoginScreen {
 
     public LoginScreen(AuthService authService, ScreenManager manager) {
 
-        // Создаем элементы интерфейса
+
         Label titleLabel = new Label("Вход в систему");
         TextField usernameField = new TextField();
         usernameField.setPromptText("Логин");
@@ -23,20 +23,20 @@ public class LoginScreen {
         Button loginButton = new Button("Войти");
         Button registerButton = new Button("Зарегистрироваться");
 
-        // Анимация ожидания
+
         ProgressIndicator progressIndicator = new ProgressIndicator();
         progressIndicator.setVisible(false);
 
-        // Обработка нажатия на кнопку "Войти"
+
         loginButton.setOnAction(event -> {
             String username = usernameField.getText();
             String password = passwordField.getText();
 
-            // Показываем анимацию ожидания
+
             progressIndicator.setVisible(true);
             loginButton.setDisable(true);
 
-            // Запускаем задачу в отдельном потоке
+
             new Thread(() -> {
                 try {
                     AccountResponse account = authService.login(username, password);
@@ -51,7 +51,7 @@ public class LoginScreen {
                     e.printStackTrace();
                     manager.showErrorScreen(e.getMessage());
                 } finally {
-                    // Скрываем анимацию и активируем кнопку
+
                     Platform.runLater(() -> {
                         progressIndicator.setVisible(false);
                         loginButton.setDisable(false);
@@ -60,13 +60,13 @@ public class LoginScreen {
             }).start();
         });
 
-        // Обработка нажатия на кнопку "Зарегистрироваться"
+
         registerButton.setOnAction(event -> {
-            // Переход на экран регистрации
+
             manager.showRegisterScreen();
         });
 
-        // Создаем layout
+
         view = new VBox(10, titleLabel, usernameField, passwordField, loginButton, registerButton, progressIndicator);
         view.setMinWidth(300);
         view.setMinHeight(400);

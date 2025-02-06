@@ -14,7 +14,7 @@ import java.nio.charset.StandardCharsets;
 public class RegisterEventListener implements ServerEventListener<ClientMessageType, ClientServerMessage> {
     @Override
     public ClientServerMessage handle(Socket socket, ClientServerMessage message) throws ServerEventListenerException {
-        // Could be more optimized and safer
+
         String data = new String(message.getData(), StandardCharsets.UTF_8);
         String[] parts = data.split(";", 2);
         if (parts.length != 2) {

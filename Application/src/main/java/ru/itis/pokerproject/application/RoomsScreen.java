@@ -30,7 +30,7 @@ public class RoomsScreen {
     private final ScreenManager manager;
     private final TableView<TableRow> roomsTableView = new TableView<>();
 
-    // Данные сессии
+
     private final SimpleStringProperty usernameProperty = new SimpleStringProperty();
     private final SimpleLongProperty moneyProperty = new SimpleLongProperty();
 
@@ -40,15 +40,15 @@ public class RoomsScreen {
         this.manager = manager;
         this.connectToRoomService = connectToRoomService;
 
-        // Получаем данные из сессии
+
         usernameProperty.set(SessionStorage.getUsername());
         moneyProperty.set(SessionStorage.getMoney());
 
-        // Заголовок
+
         Label titleLabel = new Label("Список комнат");
         titleLabel.setFont(new Font("Arial", 20));
 
-        // Панель пользователя (отображает username и баланс)
+
         Label usernameLabel = new Label();
         usernameLabel.textProperty().bind(usernameProperty);
 
@@ -58,10 +58,10 @@ public class RoomsScreen {
         HBox userBox = new HBox(10, new Label("Игрок:"), usernameLabel, balanceLabel);
         userBox.setAlignment(Pos.CENTER_RIGHT);
 
-        // Таблица комнат
+
         roomsTableView.setStyle("-fx-background-color: #f0f0f0; -fx-border-color: #cccccc; -fx-border-radius: 5; -fx-padding: 10;");
 
-        // Столбцы
+
         TableColumn<TableRow, String> idColumn = new TableColumn<>("ID");
         idColumn.setCellValueFactory(cellData -> cellData.getValue().idProperty());
 
@@ -71,7 +71,7 @@ public class RoomsScreen {
         TableColumn<TableRow, String> minBetColumn = new TableColumn<>("Мин. ставка");
         minBetColumn.setCellValueFactory(cellData -> cellData.getValue().minBetProperty());
 
-        // Добавляем кнопку "Подключиться" в таблицу
+
         TableColumn<TableRow, Button> connectColumn = new TableColumn<>("Подключиться");
         connectColumn.setCellValueFactory(cellData -> new SimpleObjectProperty<>(cellData.getValue().getConnectButton()));
 
@@ -90,7 +90,7 @@ public class RoomsScreen {
 
         roomsTableView.getColumns().addAll(idColumn, playersColumn, minBetColumn, connectColumn);
 
-        // Кнопки
+
         Button createRoomButton = new Button("Создать комнату");
         createRoomButton.setStyle("-fx-background-color: #008CBA; -fx-text-fill: white; -fx-font-weight: bold;");
         createRoomButton.setPrefWidth(150);
@@ -164,23 +164,23 @@ public class RoomsScreen {
         dialogStage.initModality(Modality.APPLICATION_MODAL);
         dialogStage.setTitle("Создание комнаты");
 
-        // Создаем подпись и выпадающий список для максимального количества игроков (от 2 до 4)
+
         Label maxPlayersLabel = new Label("Макс. игроков:");
         ComboBox<Integer> maxPlayersComboBox = new ComboBox<>();
         maxPlayersComboBox.getItems().addAll(2, 3, 4);
         maxPlayersComboBox.setValue(2); // значение по умолчанию
 
-        // Подпись и текстовое поле для минимальной ставки
+
         Label minBetLabel = new Label("Мин. ставка:");
         TextField minBetField = new TextField();
         minBetField.setPromptText("Например, 100");
 
-        // Кнопка создания комнаты
+
         Button createButton = new Button("Создать");
         createButton.setStyle("-fx-background-color: #4CAF50; -fx-text-fill: white; -fx-font-weight: bold;");
         createButton.setOnAction(event -> {
             try {
-                // Получаем выбранное значение из ComboBox для максимального количества игроков
+
                 int maxPlayers = maxPlayersComboBox.getValue();
                 long minBet = Long.parseLong(minBetField.getText());
 
@@ -199,7 +199,7 @@ public class RoomsScreen {
             }
         });
 
-        // Располагаем элементы диалогового окна в вертикальном контейнере
+
         VBox dialogLayout = new VBox(10, maxPlayersLabel, maxPlayersComboBox, minBetLabel, minBetField, createButton);
         dialogLayout.setAlignment(Pos.CENTER);
         dialogLayout.setPrefSize(300, 200);
