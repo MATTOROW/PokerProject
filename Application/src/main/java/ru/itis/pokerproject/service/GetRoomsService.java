@@ -9,7 +9,7 @@ import ru.itis.pokerproject.shared.template.client.ClientException;
 public class GetRoomsService {
     private final Client<ClientMessageType, ClientServerMessage> client;
 
-    public GetRoomsService(Client<ClientMessageType,ClientServerMessage> client) {
+    public GetRoomsService(Client<ClientMessageType, ClientServerMessage> client) {
         this.client = client;
     }
 

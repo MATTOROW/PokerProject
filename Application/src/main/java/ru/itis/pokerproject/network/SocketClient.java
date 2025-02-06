@@ -21,9 +21,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class SocketClient implements Client<ClientMessageType, ClientServerMessage>, GameClient {
-    protected boolean started = false;
     protected final InetAddress address;
     protected final int port;
+    protected boolean started = false;
     protected Socket socket;
     protected Socket gameSocket;
     protected List<GameEventListener> listeners;
@@ -40,11 +40,10 @@ public class SocketClient implements Client<ClientMessageType, ClientServerMessa
 
     @Override
     public void connect() throws ClientException {
-        try{
+        try {
             socket = new Socket(address, port);
             started = true;
-        }
-        catch(IOException ex){
+        } catch (IOException ex) {
             throw new ClientException("Can't connect.", ex);
         }
     }
@@ -61,23 +60,21 @@ public class SocketClient implements Client<ClientMessageType, ClientServerMessa
         if (socket == null || socket.isClosed()) {
             throw new ClientException("Socket is not connected.");
         }
-        try{
+        try {
             socket.getOutputStream().write(ClientServerMessageUtils.getBytes(message));
             socket.getOutputStream().flush();
             return ClientServerMessageUtils.readMessage(socket.getInputStream());
-        }
-        catch(IOException ex){
+        } catch (IOException ex) {
             throw new ClientException("Can't send message.", ex);
         }
     }
 
     @Override
     public void connectToGameServer(String address, int port) throws ClientException {
-        try{
+        try {
             this.gameSocket = new Socket(address, port);
             listenToGameServer();
-        }
-        catch(IOException ex){
+        } catch (IOException ex) {
             throw new ClientException("Can't connect.", ex);
         }
     }
@@ -88,7 +85,7 @@ public class SocketClient implements Client<ClientMessageType, ClientServerMessa
                 while (gameSocket != null && !gameSocket.isClosed()) {
                     GameServerMessage message = readMessageFromGameServer();
                     boolean handled = false;
-                    for (GameEventListener listener: listeners) {
+                    for (GameEventListener listener : listeners) {
                         if (listener.getType() == message.getType()) {
                             listener.handle(message);
                             handled = true;
@@ -113,11 +110,10 @@ public class SocketClient implements Client<ClientMessageType, ClientServerMessa
         if (gameSocket == null || gameSocket.isClosed()) {
             throw new ClientException("Socket is not connected.");
         }
-        try{
+        try {
             gameSocket.getOutputStream().write(GameServerMessageUtils.getBytes(message));
             gameSocket.getOutputStream().flush();
-        }
-        catch(IOException ex){
+        } catch (IOException ex) {
             throw new ClientException("Can't send message.", ex);
         }
     }

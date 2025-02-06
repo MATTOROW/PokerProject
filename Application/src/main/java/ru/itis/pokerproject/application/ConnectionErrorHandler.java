@@ -5,8 +5,8 @@ import javafx.scene.control.Alert;
 import javafx.scene.control.ButtonType;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
-import ru.itis.pokerproject.shared.template.client.ClientException;
 import ru.itis.pokerproject.network.SocketClient;
+import ru.itis.pokerproject.shared.template.client.ClientException;
 
 public class ConnectionErrorHandler {
     private final SocketClient client;

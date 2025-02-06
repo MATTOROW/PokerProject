@@ -20,9 +20,9 @@ public class FindRoomService {
         }
         boolean found = server.findRoom(code);
         if (found) {
-            return new byte[] {1};
+            return new byte[]{1};
         } else {
-            return new byte[] {0};
+            return new byte[]{0};
         }
     }
 }

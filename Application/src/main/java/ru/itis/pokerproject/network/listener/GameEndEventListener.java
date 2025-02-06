@@ -103,7 +103,7 @@ public class GameEndEventListener implements GameEventListener {
         });
     }
 
-    
+
     private Card parseCard(String cardStr) {
         String[] parts = cardStr.split(" ");
         if (parts.length < 2) {

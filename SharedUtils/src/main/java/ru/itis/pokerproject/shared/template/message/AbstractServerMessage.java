@@ -9,19 +9,19 @@ public abstract class AbstractServerMessage<E extends Enum<E>> implements Server
         this.data = data;
     }
 
-    public E getType() {
-        return type;
-    }
-
-    public byte[] getData() {
-        return data;
-    }
-
     public static int getMaxLength() {
         return -1;
     }
 
     public static byte[] getStartBytes() {
         return new byte[0];
+    }
+
+    public E getType() {
+        return type;
+    }
+
+    public byte[] getData() {
+        return data;
     }
 }

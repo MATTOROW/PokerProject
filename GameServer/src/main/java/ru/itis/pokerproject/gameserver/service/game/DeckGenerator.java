@@ -13,8 +13,8 @@ public class DeckGenerator {
     private static final List<Card> deck = new CopyOnWriteArrayList<>();
 
     static {
-        for (Suit suit: Suit.values()) {
-            for (Value value: Value.values()) {
+        for (Suit suit : Suit.values()) {
+            for (Value value : Value.values()) {
                 deck.add(new Card(suit, value));
             }
         }

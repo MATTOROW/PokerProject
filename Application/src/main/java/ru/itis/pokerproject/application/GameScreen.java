@@ -8,7 +8,10 @@ import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.scene.control.TextFormatter;
-import javafx.scene.layout.*;
+import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.StackPane;
+import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Ellipse;
 import javafx.util.Duration;
@@ -27,57 +30,36 @@ import java.util.List;
 public class GameScreen extends BorderPane {
 
 
+    private final ScreenManager manager;
+    private final SendReadyStatusService sendReadyStatusService;
+    private final SendMessageToGameServerService sendMessageToGameServerService;
     private int maxPlayers;
     private int currentPlayers;
     private long minBet;
-
-
     private List<PlayerInfo> opponents;
-
     private PlayerInfo myPlayer;
-    private final ScreenManager manager;
     private boolean gameStarted = false; // Флаг: игра началась
-
-
     private Label potLabel;
     private Label currentBetLabel;
     private Label bankValueLabel;
     private Label currentBetValueLabel;
-
-
     private Label notificationLabel;
-
-
     private HBox opponentsPane;
-
-
     private StackPane centerPane;
     private Ellipse tableShape;         // Графика стола
     private HBox communityCardsBox;     // Контейнер для 5 общих карт
     private List<Label> communityCardLabels; // Метки для общих карт
-
-
     private HBox bottomContainer;
     private VBox myPlayerInfoPane;      // Информация о вашем игроке
-
-
     private HBox readinessPanel;
     private HBox actionButtonsPane;
-
-
     private Button foldButton;
     private Button checkButton;
     private Button callButton;
     private Button raiseButton;
     private Button allInButton;
     private TextField raiseAmountField;
-
-
     private Button readyButton;
-
-
-    private final SendReadyStatusService sendReadyStatusService;
-    private final SendMessageToGameServerService sendMessageToGameServerService;
 
     public GameScreen(int maxPlayers, int currentPlayers, long minBet, List<PlayerInfo> players, PlayerInfo myPlayer, ScreenManager manager) {
         this.maxPlayers = maxPlayers;
@@ -94,7 +76,7 @@ public class GameScreen extends BorderPane {
         updateUI();
     }
 
-    
+
     private void setupLayout() {
 
         this.setStyle("-fx-background-color: darkslategray;");
@@ -133,8 +115,6 @@ public class GameScreen extends BorderPane {
         StackPane.setAlignment(communityCardsBox, Pos.CENTER);
 
 
-
-
         Label bankStaticLabel = new Label("Банк: ");
         bankStaticLabel.setStyle("-fx-text-fill: gold; -fx-font-size: 16px;");
         bankValueLabel = new Label(String.valueOf(Game.getPot()));
@@ -157,7 +137,6 @@ public class GameScreen extends BorderPane {
 
         StackPane.setAlignment(potInfoBox, Pos.TOP_CENTER);
         centerPane.getChildren().addAll(tableContainer, potInfoBox);
-
 
 
         notificationLabel = new Label();
@@ -186,7 +165,7 @@ public class GameScreen extends BorderPane {
         this.setBottom(bottomContainer);
     }
 
-    
+
     private VBox createMyPlayerInfoPane() {
         VBox box = new VBox(5);
         box.setAlignment(Pos.CENTER_LEFT);
@@ -225,29 +204,26 @@ public class GameScreen extends BorderPane {
     }
 
 
-    
     public void updateUI() {
         updatePotAndBet();
         updateMyPlayerInfo();
         updateOpponentsUI();
     }
 
-    
-    
+
     public void updatePotAndBet() {
         bankValueLabel.setText(String.valueOf(Game.getPot()));
         currentBetValueLabel.setText(String.valueOf(Game.getCurrentBet()));
     }
 
 
-    
     public void updateMyPlayerInfo() {
         VBox newMyInfo = createMyPlayerInfoPane();
         bottomContainer.getChildren().set(0, newMyInfo);
         myPlayerInfoPane = newMyInfo;
     }
 
-    
+
     public void updateOpponentsUI() {
         opponentsPane.getChildren().clear();
         for (PlayerInfo opponent : opponents) {
@@ -256,7 +232,7 @@ public class GameScreen extends BorderPane {
         }
     }
 
-    
+
     private VBox createOpponentBox(PlayerInfo opponent) {
         VBox box = new VBox(5);
         box.setAlignment(Pos.CENTER);
@@ -294,7 +270,7 @@ public class GameScreen extends BorderPane {
         return box;
     }
 
-    
+
     private Label createHiddenCardLabel() {
         Label cardLabel = new Label("🂠");
         cardLabel.setMinSize(50, 70);
@@ -303,7 +279,7 @@ public class GameScreen extends BorderPane {
         return cardLabel;
     }
 
-    
+
     private Label createCardLabel(Card card) {
 
         String suitSymbol = card.suit().getSuitSymbol();
@@ -313,8 +289,6 @@ public class GameScreen extends BorderPane {
         Label cardLabel = new Label(cardText);
         cardLabel.setMinSize(50, 70);
         cardLabel.setAlignment(Pos.CENTER);
-
-
 
 
         String backGroundColor;
@@ -340,8 +314,6 @@ public class GameScreen extends BorderPane {
     }
 
 
-
-    
     private void handleReadyButtonClick() {
         readyButton.setDisable(true);
         try {
@@ -351,7 +323,7 @@ public class GameScreen extends BorderPane {
         }
     }
 
-    
+
     public void startGame() {
         gameStarted = true;
         bottomContainer.getChildren().remove(1); // Удаляем панель готовности
@@ -361,7 +333,7 @@ public class GameScreen extends BorderPane {
         updateOpponentsUI();
     }
 
-    
+
     public void initializeActionButtons() {
         foldButton = new Button("FOLD");
         checkButton = new Button("CHECK");
@@ -439,7 +411,6 @@ public class GameScreen extends BorderPane {
     }
 
 
-
     private void handleFold() {
         showNotification("Вы сбросили карты (FOLD)");
         try {
@@ -503,7 +474,7 @@ public class GameScreen extends BorderPane {
                 myPlayer.subtractMoney(toSubtract);
             } else {
                 Game.setPot(Game.getPot() + toSubtract);
-                Game.setCurrentBet(Game.getCurrentBet() + toSubtract);
+                Game.setCurrentBet(toSubtract);
                 myPlayer.subtractMoney(toSubtract);
             }
             updatePotAndBet();
@@ -512,7 +483,7 @@ public class GameScreen extends BorderPane {
         }
     }
 
-    
+
     public void showNotification(String message) {
         Platform.runLater(() -> {
             notificationLabel.setText(message);
@@ -528,7 +499,7 @@ public class GameScreen extends BorderPane {
         });
     }
 
-    
+
     private void showWaitingMessage() {
         Label waitingLabel = new Label("Ждем действий других игроков...");
         waitingLabel.setStyle("-fx-text-fill: white; -fx-font-size: 16px; -fx-padding: 10px;");
@@ -536,12 +507,12 @@ public class GameScreen extends BorderPane {
         bottomContainer.getChildren().set(1, waitingLabel);
     }
 
-    
+
     public void restoreActionButtons() {
         bottomContainer.getChildren().set(1, actionButtonsPane);
     }
 
-    
+
     public void updateCommunityCards() {
         List<Card> cards = Game.getCommunityCards();
         for (int i = 0; i < communityCardLabels.size(); i++) {
@@ -556,7 +527,6 @@ public class GameScreen extends BorderPane {
             }
         }
     }
-
 
 
     public ScreenManager getManager() {

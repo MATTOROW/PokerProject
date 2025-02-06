@@ -23,8 +23,8 @@ public class ConnectToRoomService {
             String[] data = new String(response.getData()).split(":");
             client.connectToGameServer(data[0], Integer.parseInt(data[1]));
             client.sendMessageToGameServer(GameServerMessageUtils.createMessage(
-                    GameMessageType.CONNECT_TO_ROOM_REQUEST,
-                    "%s;%s".formatted(roomId, token).getBytes()
+                            GameMessageType.CONNECT_TO_ROOM_REQUEST,
+                            "%s;%s".formatted(roomId, token).getBytes()
                     )
             );
         } else {

@@ -1,6 +1,7 @@
 package ru.itis.pokerproject.gameserver.service.game;
 
-import ru.itis.pokerproject.gameserver.model.game.*;
+import ru.itis.pokerproject.gameserver.model.game.HandType;
+import ru.itis.pokerproject.gameserver.model.game.HandWorth;
 import ru.itis.pokerproject.shared.model.Card;
 import ru.itis.pokerproject.shared.model.Suit;
 import ru.itis.pokerproject.shared.model.Value;
@@ -156,7 +157,7 @@ public class HandEvaluator {
             swapById(hand, 0, 4);
         }
     }
-    
+
     private static <T> void swapById(List<T> list, int index1, int index2) {
         T obj1 = list.get(index1);
         list.set(index1, list.get(index2));

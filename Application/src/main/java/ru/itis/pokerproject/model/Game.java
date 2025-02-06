@@ -60,10 +60,6 @@ public class Game {
         Game.minBet = minBet;
     }
 
-    public static void setGameScreen(GameScreen screen) {
-        gameScreen = screen;
-    }
-
     public static ScreenManager getManager() {
         return manager;
     }
@@ -95,7 +91,7 @@ public class Game {
     }
 
     public static PlayerInfo getPlayerByUsername(String username) {
-        for (PlayerInfo playerInfo: players) {
+        for (PlayerInfo playerInfo : players) {
             if (playerInfo.getUsername().equals(username)) {
                 return playerInfo;
             }
@@ -125,6 +121,10 @@ public class Game {
 
     public static GameScreen getGameScreen() {
         return gameScreen;
+    }
+
+    public static void setGameScreen(GameScreen screen) {
+        gameScreen = screen;
     }
 
     public static List<Card> getCommunityCards() {

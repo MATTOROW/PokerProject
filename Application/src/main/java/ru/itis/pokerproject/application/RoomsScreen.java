@@ -12,15 +12,10 @@ import javafx.scene.layout.VBox;
 import javafx.scene.text.Font;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
-import ru.itis.pokerproject.model.Game;
-import ru.itis.pokerproject.model.PlayerInfo;
 import ru.itis.pokerproject.service.ConnectToRoomService;
 import ru.itis.pokerproject.service.CreateRoomService;
 import ru.itis.pokerproject.service.GetRoomsService;
 import ru.itis.pokerproject.shared.template.client.ClientException;
-
-import java.util.ArrayList;
-import java.util.List;
 
 public class RoomsScreen {
     private final VBox view;
@@ -209,6 +204,10 @@ public class RoomsScreen {
         dialogStage.showAndWait();
     }
 
+    public void updateUserData() {
+        usernameProperty.set(SessionStorage.getUsername());
+        moneyProperty.set(SessionStorage.getMoney());
+    }
 
     public static class TableRow {
         private final SimpleStringProperty id;
@@ -239,10 +238,5 @@ public class RoomsScreen {
         public Button getConnectButton() {
             return connectButton;
         }
-    }
-
-    public void updateUserData() {
-        usernameProperty.set(SessionStorage.getUsername());
-        moneyProperty.set(SessionStorage.getMoney());
     }
 }

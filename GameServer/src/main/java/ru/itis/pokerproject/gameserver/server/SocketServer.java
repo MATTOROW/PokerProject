@@ -22,14 +22,13 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 public class SocketServer extends AbstractSocketServer<GameMessageType, GameServerMessage> {
-    private Socket clientServerToSend;
-    private Socket clientServerToListen;
     private final String clientServerHost;
     private final int clientServerPort;
     private final List<ServerEventListener<GameMessageType, GameServerMessage>> clientServerListeners;
     private final RoomManager manager;
-
     private final UUID id = UUID.randomUUID();
+    private Socket clientServerToSend;
+    private Socket clientServerToListen;
 
     public SocketServer(int port, String clientServerHost, int clientServerPort) {
         super(port);
@@ -45,6 +44,26 @@ public class SocketServer extends AbstractSocketServer<GameMessageType, GameServ
         ConnectToRoomService.init(this);
         PlayerReadyService.init(this);
         DisconnectFromRoomService.init(this);
+    }
+
+    private static String getLocalIPv4() {
+        Enumeration<NetworkInterface> interfaces = null;
+        try {
+            interfaces = NetworkInterface.getNetworkInterfaces();
+        } catch (SocketException e) {
+            return "Error: not found.";
+        }
+        while (interfaces.hasMoreElements()) {
+            NetworkInterface networkInterface = interfaces.nextElement();
+            Enumeration<InetAddress> addresses = networkInterface.getInetAddresses();
+            while (addresses.hasMoreElements()) {
+                InetAddress address = addresses.nextElement();
+                if (!address.isLoopbackAddress() && address instanceof Inet4Address) {
+                    return address.getHostAddress();
+                }
+            }
+        }
+        return "Not found";
     }
 
     protected void handleConnection(Socket socket) {
@@ -251,32 +270,12 @@ public class SocketServer extends AbstractSocketServer<GameMessageType, GameServ
     }
 
     public Set<String> getRoomsInfo() {
-        return  manager.getRooms().entrySet().stream()
+        return manager.getRooms().entrySet().stream()
                 .map(entry -> "%s;%s".formatted(entry.getKey().toString(), entry.getValue().getRoomInfo()))
                 .collect(Collectors.toSet());
     }
 
     public boolean findRoom(UUID code) {
         return manager.getRooms().containsKey(code);
-    }
-
-    private static String getLocalIPv4() {
-        Enumeration<NetworkInterface> interfaces = null;
-        try {
-            interfaces = NetworkInterface.getNetworkInterfaces();
-        } catch (SocketException e) {
-            return "Error: not found.";
-        }
-        while (interfaces.hasMoreElements()) {
-            NetworkInterface networkInterface = interfaces.nextElement();
-            Enumeration<InetAddress> addresses = networkInterface.getInetAddresses();
-            while (addresses.hasMoreElements()) {
-                InetAddress address = addresses.nextElement();
-                if (!address.isLoopbackAddress() && address instanceof Inet4Address) {
-                    return address.getHostAddress();
-                }
-            }
-        }
-        return "Not found";
     }
 }

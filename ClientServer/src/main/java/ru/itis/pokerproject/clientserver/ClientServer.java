@@ -7,7 +7,7 @@ public class ClientServer {
     private static final int PORT = 25000;
 
     public static void main(String[] args) {
-        try{
+        try {
             SocketServer server = new SocketServer(PORT);
             server.registerListener(new LoginEventListener());
             server.registerListener(new RegisterEventListener());

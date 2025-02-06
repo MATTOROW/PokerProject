@@ -13,7 +13,8 @@ public class LoginService {
     private static final BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
     private static final AccountRepository accountRepository = new AccountRepository();
 
-    private LoginService() {}
+    private LoginService() {
+    }
 
     public static byte[] login(String username, String password) {
         AccountEntity account = accountRepository.findByUsername(username).orElse(null);

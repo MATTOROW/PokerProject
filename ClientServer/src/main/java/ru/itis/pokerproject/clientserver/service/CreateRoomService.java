@@ -33,7 +33,7 @@ public class CreateRoomService {
         int index = 0;
         long minValue = counts[index];
 
-        for (int i = 1; i < counts.length; ++ i) {
+        for (int i = 1; i < counts.length; ++i) {
             if (counts[i] < minValue) {
                 minValue = counts[i];
                 index = i;

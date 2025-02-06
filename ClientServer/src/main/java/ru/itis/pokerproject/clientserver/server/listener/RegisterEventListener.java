@@ -1,7 +1,6 @@
 package ru.itis.pokerproject.clientserver.server.listener;
 
 import ru.itis.pokerproject.clientserver.service.RegisterService;
-import ru.itis.pokerproject.shared.dto.response.AccountResponse;
 import ru.itis.pokerproject.shared.protocol.clientserver.ClientMessageType;
 import ru.itis.pokerproject.shared.protocol.clientserver.ClientServerMessage;
 import ru.itis.pokerproject.shared.protocol.clientserver.ClientServerMessageUtils;

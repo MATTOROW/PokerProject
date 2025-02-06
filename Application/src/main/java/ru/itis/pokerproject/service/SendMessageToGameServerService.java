@@ -1,9 +1,7 @@
 package ru.itis.pokerproject.service;
 
 import ru.itis.pokerproject.network.SocketClient;
-
 import ru.itis.pokerproject.shared.protocol.gameserver.GameServerMessage;
-
 import ru.itis.pokerproject.shared.template.client.ClientException;
 
 public class SendMessageToGameServerService {
@@ -14,6 +12,6 @@ public class SendMessageToGameServerService {
     }
 
     public void sendMessage(GameServerMessage message) throws ClientException {
-       client.sendMessageToGameServer(message);
+        client.sendMessageToGameServer(message);
     }
 }

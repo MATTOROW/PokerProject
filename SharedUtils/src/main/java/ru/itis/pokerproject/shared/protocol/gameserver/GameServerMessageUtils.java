@@ -1,6 +1,5 @@
 package ru.itis.pokerproject.shared.protocol.gameserver;
 
-import ru.itis.pokerproject.shared.protocol.gameserver.GameServerMessage;
 import ru.itis.pokerproject.shared.protocol.exception.*;
 
 import java.io.IOException;
@@ -14,7 +13,7 @@ import static ru.itis.pokerproject.shared.protocol.gameserver.GameServerMessage.
 public class GameServerMessageUtils {
     // Фабричный метод для создания сообщения с типом и данными
     public static GameServerMessage createMessage(
-           GameMessageType messageType,
+            GameMessageType messageType,
             byte[] data
     ) throws MessageException {
         if (data.length > MAX_LENGTH) {

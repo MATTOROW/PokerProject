@@ -25,7 +25,7 @@ public class CommunityCardsEventListener implements GameEventListener {
                 .collect(Collectors.toList());
         Game.getCommunityCards().addAll(cards);
         List<PlayerInfo> players = Game.getPlayers();
-        for (PlayerInfo player: players) {
+        for (PlayerInfo player : players) {
             System.out.println("Текущая ставка у игрока (из communityCardsListener)" + player.getCurrentBet());
         }
         Game.setCurrentBet(0);

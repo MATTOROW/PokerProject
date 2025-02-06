@@ -1,15 +1,14 @@
 package ru.itis.pokerproject.model;
 
-import ru.itis.pokerproject.shared.model.Card;
 import javafx.beans.property.SimpleLongProperty;
+import ru.itis.pokerproject.shared.model.Card;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class PlayerInfo {
-    private String username;
-
     private final SimpleLongProperty moneyProperty;
+    private String username;
     private long defaultMoney;
     private boolean isReady;
     private List<Card> hand;
@@ -28,16 +27,17 @@ public class PlayerInfo {
         return username;
     }
 
+    public void setUsername(String username) {
+        this.username = username;
+    }
 
     public SimpleLongProperty moneyProperty() {
         return moneyProperty;
     }
 
-
     public long getMoney() {
         return moneyProperty.get();
     }
-
 
     public void setMoney(long money) {
         this.moneyProperty.set(money);
@@ -53,10 +53,6 @@ public class PlayerInfo {
 
     public boolean isReady() {
         return isReady;
-    }
-
-    public void setUsername(String username) {
-        this.username = username;
     }
 
     public void setReady(boolean ready) {

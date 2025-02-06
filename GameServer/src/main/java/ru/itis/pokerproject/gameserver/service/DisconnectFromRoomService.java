@@ -1,16 +1,11 @@
 package ru.itis.pokerproject.gameserver.service;
 
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.Jwts;
 import ru.itis.pokerproject.gameserver.model.GameHandler;
-import ru.itis.pokerproject.gameserver.model.Room;
-import ru.itis.pokerproject.gameserver.model.game.Player;
 import ru.itis.pokerproject.gameserver.server.RoomManager;
 import ru.itis.pokerproject.gameserver.server.SocketServer;
 import ru.itis.pokerproject.shared.template.server.ServerException;
 
 import java.net.Socket;
-import java.util.Date;
 import java.util.UUID;
 
 public class DisconnectFromRoomService {

@@ -8,9 +8,6 @@ import javafx.stage.Stage;
 import ru.itis.pokerproject.model.Game;
 import ru.itis.pokerproject.network.SocketClient;
 import ru.itis.pokerproject.service.*;
-import ru.itis.pokerproject.shared.protocol.clientserver.ClientMessageType;
-import ru.itis.pokerproject.shared.protocol.clientserver.ClientServerMessage;
-import ru.itis.pokerproject.shared.template.client.Client;
 
 public class ScreenManager {
     private final Stage primaryStage;

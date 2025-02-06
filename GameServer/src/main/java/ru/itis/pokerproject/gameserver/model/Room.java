@@ -81,7 +81,7 @@ public class Room {
         StringBuilder answer = new StringBuilder();
         answer.append(getRoomInfo());
         answer.append("\n");
-        for (var player: players) {
+        for (var player : players) {
             answer.append(player.getInfo());
             answer.append("\n");
         }

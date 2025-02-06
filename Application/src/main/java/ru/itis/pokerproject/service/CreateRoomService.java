@@ -11,7 +11,7 @@ import java.util.UUID;
 public class CreateRoomService {
     private final Client<ClientMessageType, ClientServerMessage> client;
 
-    public CreateRoomService(Client<ClientMessageType,ClientServerMessage> client) {
+    public CreateRoomService(Client<ClientMessageType, ClientServerMessage> client) {
         this.client = client;
     }
 

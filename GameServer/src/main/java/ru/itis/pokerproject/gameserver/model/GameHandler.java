@@ -1,12 +1,12 @@
 package ru.itis.pokerproject.gameserver.model;
 
 
-import ru.itis.pokerproject.shared.model.Card;
 import ru.itis.pokerproject.gameserver.model.game.HandWorth;
 import ru.itis.pokerproject.gameserver.model.game.Player;
 import ru.itis.pokerproject.gameserver.server.SocketServer;
 import ru.itis.pokerproject.gameserver.service.game.DeckGenerator;
 import ru.itis.pokerproject.gameserver.service.game.HandEvaluator;
+import ru.itis.pokerproject.shared.model.Card;
 import ru.itis.pokerproject.shared.protocol.clientserver.ClientMessageType;
 import ru.itis.pokerproject.shared.protocol.clientserver.ClientServerMessage;
 import ru.itis.pokerproject.shared.protocol.clientserver.ClientServerMessageUtils;
@@ -25,11 +25,11 @@ import java.util.Map;
 public class GameHandler {
     private final Room room;
     private final SocketServer socketServer;
+    private final long minBet;
     private int currentDiller = -1; // Индекс дилера (по умолчанию -1, чтобы сдвигался).
     private int currentStep; // Индекс текущего игрока
     private int lastRaiser;   // Индекс последнего игрока, повысившего ставку
     private long currentBet;  // Текущая ставка
-    private final long minBet;
     private long pot; // Весь банк
     private List<Player> activePlayers = new ArrayList<>();
     private List<Card> communityCards = new ArrayList<>();
@@ -429,7 +429,7 @@ public class GameHandler {
             long winnings = pot;
             winners.forEach(p -> p.addMoney(winnings));
             activePlayers.forEach(p -> p.setDefaultMoney(p.getMoney()));
-            for (Player player: winners) {
+            for (Player player : winners) {
                 gameResult.append(player.getUsername());
                 gameResult.append(";");
                 gameResult.append("1");
@@ -481,7 +481,7 @@ public class GameHandler {
             activePlayers.forEach(p -> p.setDefaultMoney(p.getMoney()));
             activePlayers.forEach(p -> System.out.println("Деньги игрока: " + p.getUsername() + " = " + p.getDefaultMoney()));
 
-            for (Player player: winners) {
+            for (Player player : winners) {
                 gameResult.append(player.getUsername());
                 gameResult.append(";");
                 gameResult.append("1");
@@ -494,7 +494,7 @@ public class GameHandler {
                 System.out.println("Значение денег в базе у игрока " + player.getUsername() + " - " + new String(answer.getData()));
             }
             if (!otherPlayers.isEmpty()) {
-                for (Player player: otherPlayers) {
+                for (Player player : otherPlayers) {
                     gameResult.append(player.getUsername());
                     gameResult.append(";");
                     gameResult.append("0");

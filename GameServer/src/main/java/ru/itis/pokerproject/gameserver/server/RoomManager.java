@@ -30,12 +30,12 @@ public class RoomManager {
     }
 
     public void removeRoom(Room room) {
-        for(Map.Entry<UUID, Room> entry : rooms.entrySet()){
-            if (room.equals(entry.getValue())){
-               UUID roomId = entry.getKey();
-               rooms.remove(roomId);
-               gameHandlers.remove(roomId);
-               break;
+        for (Map.Entry<UUID, Room> entry : rooms.entrySet()) {
+            if (room.equals(entry.getValue())) {
+                UUID roomId = entry.getKey();
+                rooms.remove(roomId);
+                gameHandlers.remove(roomId);
+                break;
             }
         }
     }

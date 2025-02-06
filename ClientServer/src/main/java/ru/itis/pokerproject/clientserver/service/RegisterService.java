@@ -8,7 +8,8 @@ public class RegisterService {
     private static final AccountRepository accountRepository = new AccountRepository();
     private static final BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
 
-    private RegisterService() {}
+    private RegisterService() {
+    }
 
     public static byte[] register(String username, String password) {
         AccountEntity account = accountRepository.create(username, encoder.encode(password)).orElse(null);

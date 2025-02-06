@@ -35,7 +35,7 @@ public class GetRoomsService {
         }
         byte[] result = new byte[length];
         int currentPos = 0;
-        for (GameServerMessage message: responses) {
+        for (GameServerMessage message : responses) {
             System.arraycopy(message.getData(), 0, result, currentPos, message.getData().length);
             currentPos = message.getData().length;
             if (currentPos == length) {

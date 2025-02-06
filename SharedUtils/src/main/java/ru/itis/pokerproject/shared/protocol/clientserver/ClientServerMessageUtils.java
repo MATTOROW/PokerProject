@@ -8,7 +8,6 @@ import java.nio.ByteBuffer;
 import java.util.Arrays;
 
 
-
 public class ClientServerMessageUtils {
     private static final int MAX_LENGTH = ClientServerMessage.getMaxLength();
     private static final byte[] START_BYTES = ClientServerMessage.getStartBytes();

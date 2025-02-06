@@ -4,9 +4,6 @@ import ru.itis.pokerproject.clientserver.service.CreateRoomService;
 import ru.itis.pokerproject.shared.protocol.clientserver.ClientMessageType;
 import ru.itis.pokerproject.shared.protocol.clientserver.ClientServerMessage;
 import ru.itis.pokerproject.shared.protocol.clientserver.ClientServerMessageUtils;
-import ru.itis.pokerproject.shared.protocol.gameserver.GameMessageType;
-import ru.itis.pokerproject.shared.protocol.gameserver.GameServerMessage;
-import ru.itis.pokerproject.shared.protocol.gameserver.GameServerMessageUtils;
 import ru.itis.pokerproject.shared.template.listener.ServerEventListener;
 import ru.itis.pokerproject.shared.template.listener.ServerEventListenerException;
 
