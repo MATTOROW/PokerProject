@@ -8,8 +8,8 @@ import ru.itis.pokerproject.shared.protocol.gameserver.GameServerMessage;
 public class ErrorEventListener implements GameEventListener {
     @Override
     public void handle(GameServerMessage message) {
-        Platform.runLater(() -> Game.getGameScreen().getManager().showErrorScreen(new String(message.getData())));
-        Platform.runLater(Game.getGameScreen().getManager()::showRoomsScreen);
+        Platform.runLater(() -> Game.getManager().showErrorScreen(new String(message.getData())));
+        Platform.runLater(Game.getManager()::showRoomsScreen);
     }
 
     @Override
